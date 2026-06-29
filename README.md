@@ -1,67 +1,54 @@
-![Logo](https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/ChoraBannerTransparent.png?raw=true)
+<div align="center">
+  <img src="app/src/main/res/drawable/pissgrind_logo.png" width="150" />
+  
+  # pissgrind
+  
+  A private music streaming app powered by Navidrome.
+  
+  [![GitHub release](https://img.shields.io/github/v/release/skit1312/pissgrind)](https://github.com/skit1312/pissgrind/releases)
+</div>
 
-A simple and light-weight app that streams music from a Subsonic or Navidrome server, or from the phone's storage.
-
-*Please do not use as a learning resource. This was my first Kotlin project, and the code is not well-organized at all. AI was used earlier in development (and it shows, the code is a mess lol)*
-
-<a href='https://play.google.com/store/apps/details?id=com.craftworks.music&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img width=256px alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png'/></a>
-
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-alt="Get it on F-Droid"
-height="80">](https://f-droid.org/packages/com.craftworks.music/)
+---
 
 ## Features
 
-- Subsonic/Navidrome support.
-- Android Auto.
-- Android TV.
-- Material 3 UI.
-- Download songs and albums from server.
-- Internet Radio.
-- Word Synced<sup>LrcLib Only</sup>, Line Synced And Unsynced Lyrics. [From lrclib.net or self-hosted instance and NetEase]
-- Navidrome and Local playlists.
-- Multiple Navidrome libraries.
-- Transcoding.
+- Stream the pissgrind.ch music library for free
+- In-app registration with email approval system
+- Request songs and albums directly from the app
+- Custom dark theme (PissGreen #99ff33 + PissBlack #000000)
+- Secure authentication with admin approval workflow
 
-## Roadmap
+## Installation
 
-- Jellyfin (music)
-- Chromecast
+1. Download the latest APK from [Releases](https://github.com/skit1312/pissgrind/releases)
+2. Install on your Android device
+3. Register an account and wait for admin approval
+4. Login and enjoy your music!
 
 ## Screenshots
 
-### Mobile
-<p align="center">
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/Now-Playing-Screen.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/Now-Playing-SyncedLyrics.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/HomeScreen.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/AlbumScreen.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/ArtistScreen.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/RadioScreen.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/PlaylistScreen.png?raw=true" width=200>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/Github/Images/SongScreen.png?raw=true" width=200>
-</p>
 
-### TV
-<p align="left">
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/fastlane/metadata/android/en-US/images/tvScreenshots/1.png?raw=true" width=400>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/fastlane/metadata/android/en-US/images/tvScreenshots/2.png?raw=true" width=400>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/fastlane/metadata/android/en-US/images/tvScreenshots/3.png?raw=true" width=400>
-    <img src="https://github.com/CraftWorksMC/Chora/blob/master/fastlane/metadata/android/en-US/images/tvScreenshots/4.png?raw=true" width=400>
-</p>
 
-## Help translate!
+## Stack
 
-Help translate on <a href="https://crowdin.com/project/chora">Crowdin</a>
+- **Language:** Kotlin
+- **UI:** Jetpack Compose + Material 3
+- **Backend:** Navidrome (Subsonic API)
+- **Registration:** Custom FastAPI backend
+- **Hosting:** Infomaniak VPS Cloud(CH) (Arch Linux)
 
-## Support the project
+## Self-Hosting
 
-To help keep this project free and open source to everyone, consider donating. Thank you!  
-<a href="https://www.paypal.com/donate/?hosted_button_id=REWCVJBKECU34">
-  <img width=256px src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" alt="Donate with PayPal" />
-</a>
+To run your own instance you need:
+- [Navidrome](https://www.navidrome.org/) music server
+- Registration backend (FastAPI + SMTP)
+- Reverse proxy (Cloudflared / Nginx)
 
-Made with :heart: in Italy
+## Credits
 
-> Lyrics icon provided by [Remix Icon](https://remixicon.com/ "Remix Icon")
-> Other icons are provided by [Google Icons](https://fonts.google.com/icons "Google Icons")
+This app is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC.
+Modified and rebranded for private use.
+
+## License
+
+Apache-2.0 license
