@@ -1,0 +1,53 @@
+package ch.skit.pissgrind.ui.viewmodels
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import ch.skit.pissgrind.data.repository.AlbumRepository
+import ch.skit.pissgrind.data.repository.StarredRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class AlbumDetailsViewModel @Inject constructor(
+    private val albumRepository: AlbumRepository,
+    private val starredRepository: StarredRepository
+) : ViewModel() {
+    private val _songsInAlbum = MutableStateFlow<List<MediaItem>>(listOf())
+    val songsInAlbum: StateFlow<List<MediaItem>> = _songsInAlbum.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    fun loadAlbumDetails(albumId: String) {
+        viewModelScope.launch {
+            val loadingJob = launch {
+                delay(500)
+                if (_songsInAlbum.value.isEmpty()) {
+                    _isLoading.value = true
+                }
+            }
+
+            _songsInAlbum.value = albumRepository.getAlbum(albumId) ?: listOf(MediaItem.EMPTY)
+
+            loadingJob.cancel()
+            _isLoading.value = false
+        }
+    }
+
+    fun starAlbum(id: String) {
+        viewModelScope.launch {
+            starredRepository.starItem(albumId = id, ignoreCachedResponse = true)
+        }
+    }
+    fun unstarAlbum(id: String) {
+        viewModelScope.launch {
+            starredRepository.unStarItem(albumId = id, ignoreCachedResponse = true)
+        }
+    }
+}

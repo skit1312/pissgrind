@@ -1,0 +1,15 @@
+*.iml
+.gradle
+/local.properties
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/app/release/*
+/.kotlin/*
+/gradle/gradle-daemon-jvm.properties
+/crowdin.yml
+/.idea/
+/.kotlin/

@@ -1,0 +1,436 @@
+package ch.skit.pissgrind
+
+import ch.skit.pissgrind.ui.screens.settings.S_AccountScreen
+import android.content.res.Configuration
+import android.util.Log
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import ch.skit.pissgrind.data.model.Screen
+import ch.skit.pissgrind.data.model.playlistList
+import ch.skit.pissgrind.data.repository.LyricsState
+import ch.skit.pissgrind.managers.settings.LocalDataSettingsManager
+import ch.skit.pissgrind.managers.settings.MediaProviderSettingsManager
+import ch.skit.pissgrind.ui.playing.NowPlayingContent
+import ch.skit.pissgrind.ui.playing.NowPlayingViewModel
+import ch.skit.pissgrind.ui.playing.dpToPx
+import ch.skit.pissgrind.ui.screens.AlbumDetails
+import ch.skit.pissgrind.ui.screens.AlbumScreen
+import ch.skit.pissgrind.ui.screens.ArtistDetails
+import ch.skit.pissgrind.ui.screens.ArtistsScreen
+import ch.skit.pissgrind.ui.screens.HomeListsScreen
+import ch.skit.pissgrind.ui.screens.HomeScreen
+import ch.skit.pissgrind.ui.screens.PlaylistDetails
+import ch.skit.pissgrind.ui.screens.PlaylistScreen
+import ch.skit.pissgrind.ui.screens.RadioScreen
+import ch.skit.pissgrind.ui.screens.RequestScreen
+import ch.skit.pissgrind.ui.screens.SettingScreen
+import ch.skit.pissgrind.ui.screens.SongsScreen
+import ch.skit.pissgrind.ui.screens.settings.S_AppearanceScreen
+import ch.skit.pissgrind.ui.screens.settings.S_PlaybackScreen
+import ch.skit.pissgrind.ui.screens.settings.S_ProviderScreen
+import ch.skit.pissgrind.ui.screens.tv.TvAlbumDetails
+import ch.skit.pissgrind.ui.screens.tv.TvAlbumScreen
+import ch.skit.pissgrind.ui.screens.tv.TvArtistDetailsScreen
+import ch.skit.pissgrind.ui.screens.tv.TvArtistScreen
+import ch.skit.pissgrind.ui.screens.tv.TvHomeScreen
+import ch.skit.pissgrind.ui.screens.tv.TvPlaylistDetails
+import ch.skit.pissgrind.ui.screens.tv.TvPlaylistScreen
+import ch.skit.pissgrind.ui.screens.tv.TvRadioScreen
+import ch.skit.pissgrind.ui.screens.tv.TvSearchScreen
+import ch.skit.pissgrind.ui.screens.tv.TvSettingScreen
+import ch.skit.pissgrind.ui.screens.tv.TvSongsScreen
+import ch.skit.pissgrind.ui.screens.tv.settings.TvS_AppearanceScreen
+import ch.skit.pissgrind.ui.screens.tv.settings.TvS_PlaybackScreen
+import ch.skit.pissgrind.ui.screens.tv.settings.TvS_ProviderScreen
+import ch.skit.pissgrind.ui.viewmodels.AlbumScreenViewModel
+import ch.skit.pissgrind.ui.viewmodels.ArtistsScreenViewModel
+import ch.skit.pissgrind.ui.viewmodels.HomeScreenViewModel
+import ch.skit.pissgrind.ui.viewmodels.PlaylistScreenViewModel
+import ch.skit.pissgrind.ui.viewmodels.RadioScreenViewModel
+import ch.skit.pissgrind.ui.viewmodels.SongsScreenViewModel
+import java.net.URLDecoder
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun SetupNavGraph(
+    navController: NavHostController,
+    bottomPadding: Dp,
+    mediaController: MediaController?
+) {
+    val context = LocalContext.current
+    val isTv = LocalConfiguration.current.uiMode and
+            Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
+
+    playlistList =
+        LocalDataSettingsManager(context).localPlaylists.collectAsStateWithLifecycle(mutableListOf()).value
+
+    LyricsState.useLrcLib =
+        MediaProviderSettingsManager(context).lrcLibLyricsFlow.collectAsStateWithLifecycle(true).value
+
+    LyricsState.useNetEase =
+        MediaProviderSettingsManager(context).netEaseLyricsFlow.collectAsStateWithLifecycle(false).value
+
+    val leftPadding = if (LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE || isTv) 0.dp else 80.dp + WindowInsets.safeDrawing.asPaddingValues().calculateLeftPadding(
+        LayoutDirection.Ltr)
+
+    val animationSpec = MaterialTheme.LocalMotionScheme.current.slowSpatialSpec<Float>()
+
+
+
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Home.route,
+        modifier = Modifier.padding(bottom = bottomPadding, start = leftPadding),
+        enterTransition = {
+            fadeIn(animationSpec)
+        },
+        exitTransition = {
+            fadeOut(animationSpec)
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec)
+        },
+        popExitTransition = {
+            fadeOut(animationSpec)
+        },
+        route = "main_graph"
+    ) {
+        println("Recomposing NavHost!")
+        composable(route = Screen.Home.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("main_graph")
+            }
+            val viewModel: HomeScreenViewModel = hiltViewModel(parentEntry)
+            if (isTv)
+                TvSideNavigation(navController, mediaController) {
+                    TvHomeScreen(navController, mediaController, viewModel)
+                }
+            else
+                HomeScreen(navController, mediaController, viewModel)
+        }
+        composable(
+            route = Screen.HomeLists.route + "/{category}",
+            arguments = listOf(navArgument("category") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("main_graph")
+            }
+            val viewModel: HomeScreenViewModel = hiltViewModel(parentEntry)
+
+            val category = backStackEntry.arguments?.getString("category") ?: "recently_played"
+
+            val albums = when (category) {
+                "recently_played" -> viewModel.recentlyPlayedAlbums.collectAsStateWithLifecycle().value
+                "recently_added" -> viewModel.recentAlbums.collectAsStateWithLifecycle().value
+                "most_played" -> viewModel.mostPlayedAlbums.collectAsStateWithLifecycle().value
+                "random_songs" -> viewModel.shuffledAlbums.collectAsStateWithLifecycle().value
+                else -> emptyList()
+            }
+
+            HomeListsScreen(
+                albums = albums,
+                viewModel = viewModel,
+                categoryKey = category,
+                navHostController = navController,
+            )
+        }
+
+        composable(route = Screen.Song.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("main_graph")
+            }
+            val viewModel: SongsScreenViewModel = hiltViewModel(parentEntry)
+            if (isTv)
+                TvSideNavigation(navController, mediaController) {
+                    TvSongsScreen(mediaController, navController, viewModel)
+                }
+            else
+                SongsScreen(mediaController, viewModel)
+        }
+        composable(route = Screen.Radio.route) {
+            RequestScreen()
+        }
+
+        //Albums
+        composable(route = Screen.Albums.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("main_graph")
+            }
+            val viewModel: AlbumScreenViewModel = hiltViewModel(parentEntry)
+            if (isTv)
+                TvSideNavigation(navController, mediaController) {
+                    TvAlbumScreen(navController, viewModel)
+                }
+            else
+                AlbumScreen(navController, mediaController, viewModel)
+        }
+        composable(
+            route = Screen.AlbumDetails.route + "/{album}/{image}",
+            arguments = listOf(
+                navArgument("album") {
+                    type = NavType.StringType
+                },
+                navArgument("image") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val albumId = backStackEntry.arguments?.getString("album") ?: ""
+            val albumImageUri = URLDecoder.decode(backStackEntry.arguments?.getString("image"), "UTF-8")
+            if (isTv)
+                TvAlbumDetails(
+                    albumId,
+                    albumImageUri.toUri(),
+                    mediaController,
+                    navController
+                )
+            else
+                AlbumDetails(
+                    albumId,
+                    albumImageUri.toUri(),
+                    navController,
+                    mediaController,
+                )
+        }
+        //Artist
+        navigation(startDestination = Screen.Artists.route, route = "artists_graph") {
+            composable(route = Screen.Artists.route) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val viewModel: ArtistsScreenViewModel = hiltViewModel(parentEntry)
+
+                if (isTv)
+                    TvSideNavigation(navController, mediaController) {
+                        TvArtistScreen(navController, viewModel)
+                    }
+                else
+                    ArtistsScreen(navController, viewModel)
+            }
+            composable(route = Screen.ArtistDetails.route) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val viewModel: ArtistsScreenViewModel = hiltViewModel(parentEntry)
+
+                if (isTv)
+                    TvArtistDetailsScreen(navController, mediaController, viewModel)
+                else
+                    ArtistDetails(navController, mediaController, viewModel)
+            }
+        }
+
+        //Playlists
+        navigation(startDestination = Screen.Playlists.route, route = "playlists_graph") {
+            composable(route = Screen.Playlists.route) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val viewModel: PlaylistScreenViewModel = hiltViewModel(parentEntry)
+
+                if (isTv)
+                    TvSideNavigation(navController, mediaController) {
+                        TvPlaylistScreen(navController, viewModel)
+                    }
+                else
+                    PlaylistScreen(navController, viewModel)
+            }
+            composable(route = Screen.PlaylistDetails.route) { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry("main_graph")
+                }
+                val viewModel: PlaylistScreenViewModel = hiltViewModel(parentEntry)
+
+                if (isTv)
+                    TvPlaylistDetails(navController, mediaController, viewModel)
+                else
+                    PlaylistDetails(navController, mediaController, viewModel)
+            }
+        }
+
+        //Settings
+        navigation(startDestination = Screen.Setting.route, route = "settings_graph") {
+            composable(route = Screen.Setting.route) {
+                if (isTv)
+                    TvSideNavigation(navController, mediaController) {
+                        TvSettingScreen(navController)
+                    }
+                else
+                    SettingScreen(navController)
+            }
+            composable(
+                route = Screen.S_Appearance.route,
+                enterTransition = {
+                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeIn(animationSpec)
+                },
+                exitTransition = {
+                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeOut(animationSpec)
+                }
+            ) {
+                if (isTv)
+                    TvS_AppearanceScreen()
+                else
+                    S_AppearanceScreen(navController)
+            }
+            composable(
+                route = Screen.S_Providers.route,
+                enterTransition = {
+                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeIn(animationSpec)
+                },
+                exitTransition = {
+                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeOut(animationSpec)
+                }
+            ) {
+                if (isTv)
+                    TvS_ProviderScreen()
+                else
+                    S_ProviderScreen(navController)
+            }
+            composable(
+                route = Screen.S_Playback.route,
+                enterTransition = {
+                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeIn(tween(300))
+                },
+                exitTransition = {
+                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeOut(tween(300))
+                }
+            ) {
+                if (isTv)
+                    TvS_PlaybackScreen()
+                else
+                    S_PlaybackScreen(navController)
+            }
+        }
+        composable(route = Screen.S_Account.route) {
+            S_AccountScreen(navController)
+        }
+        
+        composable(route = Screen.NowPlayingLandscape.route) {
+            if (LocalWindowInfo.current.containerSize.width < dpToPx(640)) {
+                navController.popBackStack()
+                navController.navigate(Screen.Home.route) {
+                    launchSingleTop = true
+                }
+            }
+
+
+            val parentEntry = remember(it) {
+                navController.getBackStackEntry("main_graph")
+            }
+            val viewModel: NowPlayingViewModel = hiltViewModel(parentEntry)
+
+            var metadata by remember { mutableStateOf<MediaMetadata?>(null) }
+
+            // Update metadata from mediaController.
+            LaunchedEffect(mediaController) {
+                if (mediaController?.currentMediaItem != null) {
+                    metadata = mediaController.currentMediaItem?.mediaMetadata
+                }
+            }
+            DisposableEffect(mediaController) {
+                val listener = object : Player.Listener {
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        super.onMediaItemTransition(mediaItem, reason)
+                        metadata = mediaController?.currentMediaItem?.mediaMetadata
+                    }
+                }
+
+                mediaController?.addListener(listener)
+
+                onDispose {
+                    mediaController?.removeListener(listener)
+                }
+            }
+
+            NowPlayingContent(
+                mediaController,
+                metadata,
+                viewModel
+            )
+
+            // Keep screen on
+            val currentView = LocalView.current
+            DisposableEffect(Unit) {
+                currentView.keepScreenOn = true
+                Log.d("NOW-PLAYING", "KeepScreenOn: True")
+                onDispose {
+                    currentView.keepScreenOn = false
+                    Log.d("NOW-PLAYING", "KeepScreenOn: False")
+                }
+            }
+        }
+
+        composable(route = Screen.Search.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("main_graph")
+            }
+
+            val albumViewModel: AlbumScreenViewModel = hiltViewModel(parentEntry)
+            val songViewModel: SongsScreenViewModel = hiltViewModel(parentEntry)
+            val artistViewModel: ArtistsScreenViewModel = hiltViewModel(parentEntry)
+
+            TvSideNavigation(navController, mediaController) {
+                TvSearchScreen(
+                    navController,
+                    mediaController,
+                    albumViewModel,
+                    songViewModel,
+                    artistViewModel
+                )
+            }
+        }
+        composable(route = Screen.Request.route) {
+            RequestScreen()
+        } 
+    }
+}

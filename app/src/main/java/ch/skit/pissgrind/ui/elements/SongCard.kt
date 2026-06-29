@@ -1,0 +1,259 @@
+package ch.skit.pissgrind.ui.elements
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import ch.skit.pissgrind.R
+import ch.skit.pissgrind.formatMilliseconds
+import ch.skit.pissgrind.providers.navidrome.downloadNavidromeSong
+import ch.skit.pissgrind.ui.elements.dialogs.showAddSongToPlaylistDialog
+import ch.skit.pissgrind.ui.elements.dialogs.songToAddToPlaylist
+import kotlinx.coroutines.launch
+
+@Composable
+fun HorizontalSongCard(
+    song: MediaItem,
+    modifier: Modifier = Modifier,
+    showTrackNumber: Boolean = false,
+    onClick: () -> Unit,
+    onAddToQueue: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            disabledContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        ),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .height(72.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (showTrackNumber) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(8.dp, 0.dp, 0.dp, 0.dp),
+                        //.clip(CircleShape)
+                        //.background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = song.mediaMetadata.trackNumber.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+            else {
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(song.mediaMetadata.artworkUri)
+                        .crossfade(true)
+                        .size(64)
+                        .diskCacheKey(
+                            song.mediaMetadata.extras?.getString("navidromeID") ?: song.mediaId
+                        )
+                        .build(),
+                    contentDescription = "Album Image",
+                    contentScale = ContentScale.FillHeight,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(4.dp, 0.dp, 0.dp, 0.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                Modifier
+                    .padding(end = 12.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = song.mediaMetadata.title.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start
+                )
+
+                Text(
+                    text = song.mediaMetadata.artist.toString() + if (song.mediaMetadata.recordingYear != 0) " • " + song.mediaMetadata.recordingYear else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                    modifier = Modifier,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Start
+                )
+            }
+            val formattedDuration by remember(song.mediaMetadata.durationMs) {
+                derivedStateOf {
+                    formatMilliseconds((song.mediaMetadata.durationMs?.div(1000))?.toInt() ?: 0)
+                }
+            }
+            Text(
+                text = formattedDuration,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(end = 12.dp),
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End
+            )
+
+            var expanded by remember { mutableStateOf(false) }
+            Box(
+                modifier = Modifier.width(48.dp)
+            ) {
+                IconButton(
+                    modifier = Modifier,
+                    onClick = { expanded = true },
+//                    colors = IconButtonDefaults.iconButtonColors(
+//                        containerColor = MaterialTheme.colorScheme.background,
+//                        contentColor = MaterialTheme.colorScheme.primary,
+//                        disabledContainerColor = MaterialTheme.colorScheme.background,
+//                        disabledContentColor = MaterialTheme.colorScheme.onBackground
+//                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        contentDescription = "More menu"
+                    )
+                }
+
+                val coroutineScope = rememberCoroutineScope()
+                DropdownMenu(
+                    modifier = Modifier,
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(stringResource(R.string.Action_Add_To_Queue))
+                        },
+                        onClick = {
+                            onAddToQueue()
+                            expanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.outline_queue_add_24),
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(R.string.Dialog_Add_To_Playlist).replace(
+                                    "/ ",
+                                    ""
+                                )
+                            )
+                        },
+                        onClick = {
+                            println("Add Song To Playlist")
+                            showAddSongToPlaylistDialog.value = true
+                            songToAddToPlaylist.value = song
+                            expanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        enabled = !song.mediaMetadata.extras?.getString("navidromeID")!!.startsWith("Local_"),
+                        text = {
+                            Text(stringResource(R.string.Action_Download))
+                        },
+                        onClick = {
+                            coroutineScope.launch {
+                                downloadNavidromeSong(context, song.mediaMetadata)
+                            }
+                            expanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
+                                contentDescription = null
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showSystemUi = false, showBackground = true)
+@Composable
+fun PReviewHorizontalSongCard() {
+    HorizontalSongCard(
+        song = MediaItem.Builder()
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle("Lololol")
+                    .build()
+            ).build(),
+        onClick = {},
+        onAddToQueue = {}
+    )
+}
