@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="app/src/main/res/drawable/pissgrind_logo.png" width="150" />
+  <img width="150" height="150" alt="Image" src="https://github.com/user-attachments/assets/46ded284-ea52-474d-8006-6bbb183f5d7c" />
   
   # pissgrind
   
@@ -30,12 +30,8 @@
 <div align="center">
   <table>
     <tr>
-      <td><img width="250" alt="Screenshot 1" src="https://github.com/user-attachments/assets/ccce79d6-c2cd-474e-b13a-ff643ef59ff4" /></td>
-      <td><img width="250" alt="Screenshot 2" src="https://github.com/user-attachments/assets/8c71ce85-b9bb-47dc-b68b-c617f52518b9" /></td>
-    </tr>
-    <tr>
-      <td><img width="250" alt="Screenshot 3" src="https://github.com/user-attachments/assets/6121197b-dbcf-420c-be3c-5151b117f60f" /></td>
-      <td><img width="250" alt="Screenshot 4" src="https://github.com/user-attachments/assets/bc9abb5f-7029-47e9-8445-51d57b878188" /></td>
+      <td><img width="300" alt="Screenshot 1" src="https://github.com/user-attachments/assets/36ecc9b5-c6d4-45eb-8364-f9b7b178fcbc" /></td>
+      <td><img width="300" alt="Screenshot 2" src="https://github.com/user-attachments/assets/73011b66-0d71-45e5-bba1-bafc44f44f04" /></td>
     </tr>
   </table>
 </div>
