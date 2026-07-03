@@ -12,7 +12,7 @@
 
 ## Features
 
-- Stream the pissgrind.ch music library for free -> 600 Albums, with 6700 Songs by 625 Artists
+- Stream the pissgrind.ch music library for free
 - In-app registration with email approval system
 - Request songs and albums directly in the app
 - Custom dark theme (PissGreen #99ff33 + PissBlack #000000)
