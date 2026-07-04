@@ -30,8 +30,13 @@
 <div align="center">
   <table>
     <tr>
-      <td><img width="300" alt="Screenshot 1" src="https://github.com/user-attachments/assets/36ecc9b5-c6d4-45eb-8364-f9b7b178fcbc" /></td>
-      <td><img width="300" alt="Screenshot 2" src="https://github.com/user-attachments/assets/73011b66-0d71-45e5-bba1-bafc44f44f04" /></td>
+<img width="350" height="900" alt="Image" src="https://github.com/user-attachments/assets/16a0ce88-421d-4169-9049-861068dc5dea" />
+
+<img width="350" height="900" alt="Image" src="https://github.com/user-attachments/assets/2d9a8483-1aa6-4774-842c-7c5fa578eac2" />
+
+<img width="350" height="900" alt="Image" src="https://github.com/user-attachments/assets/d837ce11-7261-4302-a1b9-d740c8359182" />
+
+<img width="350" height="900" alt="Image" src="https://github.com/user-attachments/assets/e891f03a-6f40-4de6-b62b-fbee6c0e7d8e" />
     </tr>
   </table>
 </div>
