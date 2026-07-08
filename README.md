@@ -4,7 +4,8 @@
 
   A private music streaming app powered by Navidrome.
 
-  [![GitHub release](https://img.shields.io/gitlab/v/release/skit1312%2Fpissgrind)](https://github.com/skit1312/pissgrind/-/releases)
+[![GitHub release](https://img.shields.io/github/v/release/skit1312/pissgrind)](https://github.com/skit1312/pissgrind/releases)
+
 </div>
 
 ---
