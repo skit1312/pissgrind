@@ -25,11 +25,11 @@ pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWo
 - **Update checker:** Automatic update notifications via GitHub Releases API
 - **What's New dialog:** Shows changelog after updating
 - **Recently Added shortcut:** Button on home screen to browse all recently added albums
-- **Collection button on mini player:** Quickly save the currently playing song
+- **Collection button on mini player:** Quickly save the currently playing song in your library
 
 ### Changed
 - **Custom theme:** PissGreen (`#99ff33`) + PissBlack (`#000000`) throughout the entire UI
-- **Simplified navigation:** Bottom nav reduced to Home, Library, Search, and Request
+- **Simplified navigation:** Bottom nav reduced to Home, Search, Library, and Request
 - **Sharp UI:** Consistent 2.dp corner radius across all UI elements (cards, buttons, chips, sheets)
 - **Redesigned Now Playing:** Thinner progress bar, smaller thumb, PissGreen color scheme
 - **Album art:** Full cover display without blur or fading overlay, sharp corners
