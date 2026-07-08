@@ -22,7 +22,7 @@ pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWo
 - **Library system:** Save favorite songs, albums, and artists locally (replaces Navidrome star/unstar)
 - **Music request screen:** Request songs and albums directly in the app
 - **In-app registration:** Register with email, admin approval workflow
-- **Update checker:** Automatic update notifications via GitLab Releases API
+- **Update checker:** Automatic update notifications via GitHub Releases API
 - **What's New dialog:** Shows changelog after updating
 - **Recently Added shortcut:** Button on home screen to browse all recently added albums
 - **Collection button on mini player:** Quickly save the currently playing song
