@@ -49,7 +49,7 @@ pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWo
 
 ## Installation
 
-1. Download the latest APK from [Releases](https://github.com/skit1312/pissgrind/-/releases)
+1. Download the latest APK from [Releases](https://github.com/skit1312/pissgrind/releases)
 2. Install on your Android device
 3. Register an account and wait for admin approval
 4. Login and start streaming
@@ -57,19 +57,6 @@ pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWo
 Alternatively, add `https://github.com/skit1312/pissgrind` to [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates.
 
 ---
-
-## Screenshots
-
-<div align="center">
-  <table>
-    <tr>
-      <td><img width="250" alt="Home" src="screenshots/home.png" /></td>
-      <td><img width="250" alt="Now Playing" src="screenshots/nowplaying.png" /></td>
-      <td><img width="250" alt="Library" src="screenshots/library.png" /></td>
-    </tr>
-  </table>
-</div>
-
 ---
 
 ## Stack
