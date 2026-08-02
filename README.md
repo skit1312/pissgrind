@@ -12,7 +12,7 @@
 
 ## About
 
-pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC, heavily modified and rebranded for private use. It connects to a self-hosted Navidrome server and provides a streamlined music streaming experience with a custom theme.
+pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC, heavily modified and rebranded for private use. It connects to a self hosted Navidrome server and provides a streamlined music streaming experience with a custom theme.
 
 ---
 
