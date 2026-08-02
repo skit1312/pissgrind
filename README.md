@@ -27,6 +27,7 @@ pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWo
 - **Recently Added shortcut:** Button on home screen to browse all recently added albums
 - **Collection button on mini player:** Quickly save the currently playing song in your library
 - **Swipe to change Song:** Swipe horizontally to change to the next/previous song in NowPlaying
+- **Recommendation Engine(Algorirhm):** Train your own Recommendation Algorithm, by giving it Feedback. Logs for the Recommendation Engine, can be downloaded to see how the Algorithm makes it's recommendations.
 
 ### Changed
 - **Custom theme:** PissGreen (`#70dd00`) + PissBlack (`#000000`) throughout the entire UI
