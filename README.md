@@ -46,7 +46,8 @@ The pissgrind music library contains Music / Album Art, that features / displays
 - **Shuffle Settings:** Added a new "Shuffle" settings tab in the settings menu
 - **Algorithm Settings:** Added a new "Algorithm" settings tab in the settings menu
 - **Account Settings:** Added a new "Account" settings tab in the settings menu
-- **Share Button:** Added a new share button in the settings menu, that displays a QR-Code[www.pissgrind.ch] for sharing the app   
+- **Share Button:** Added a new share button in the settings menu, that displays a QR-Code[www.pissgrind.ch] for sharing the app
+- **Clickable Artist / Song Names:** All song titles and artist names are clickable in the NowPlayingScreen, and lead to either the album by clicking on the song title or the artists page by clicking on the artists name 
 
 ### Removed
 - Navidrome star/unstar functionality (replaced by local Library)
