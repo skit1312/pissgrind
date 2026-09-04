@@ -3,7 +3,7 @@
   
   ## pissgrind
 
-  A private music streaming app powered by Navidrome.
+  A private music streaming app powered by [Navidrome](https://navidrome.org).
 
 [![GitHub release](https://img.shields.io/github/v/release/skit1312/pissgrind)](https://github.com/skit1312/pissgrind/releases)
 
