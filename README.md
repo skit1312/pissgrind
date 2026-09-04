@@ -21,18 +21,18 @@ The pissgrind music library contains Music / Album Art, that features / displays
 ---
 
 ### Changes / New Features 
-- **Library system:** Save favorite songs, albums and artists locally (replaces Navidrome star/unstar)
-- **Music request screen:** Request songs and albums directly in the app
-- **In-app registration:** Register with email, admin approval workflow
-- **Update checker:** Automatic update notifications via GitHub Releases API
+- **Library System:** Save favorite songs, albums and artists locally (replaces Navidrome star / unstar)
+- **Music Request Screen:** Request songs and albums directly in the app
+- **In-app Registration:** Register with email, admin approval workflow
+- **Update Checker:** Automatic update notifications via GitHub Releases API
 - **What's New dialog:** Shows changelog after updating
-- **Add to Favourites Button:** Added a "Add to Favourites" Option in all option Dialgoues(creates a "Favourites" Playlist
+- **Add to Favourites Button:** Added a "Add to Favourites" Option in all option Dialgoues(creates a "Favourites" Playlist)
 - **Swipe to change Song:** Swipe horizontally to change to the next/previous song in NowPlaying
 - **Recommendation Engine(Algorirhm):** Train your own Recommendation Algorithm, by giving it Feedback. Logs for the Recommendation Engine, can be downloaded to see how the Algorithm makes it's recommendations. Training data is synced to user account, can be wiped
 - **Swipe Gestures:** Swipe to Queue and Swipe to Delete Gestures added in song lazy lists, and for items in the Library
-- **Custom Playlist Covers:** Added ability to choose an image from device storage as a cover image for any playlists
+- **Custom Playlist Covers:** Added ability to choose an image from device storage as a cover image for any playlist
 - **Custom theme:** Dark Theme(PissGreen: #70dd00 and PissBlack: #000000) / Light Theme(PissWhite: #ffffff and PissBlack: #000000) throughout the entire UI
-- **Simplified navigation:** Bottom nav reduced to Home, Search, Library, and Request
+- **Simplified Navigation:** Bottom nav reduced to Home, Search, Library, and Request
 - **Sharp UI:** Consistent 2.dp corner radius across all UI elements (cards, buttons, chips, sheets)
 - **Redesigned Now Playing:** Thinner progress bar, smaller thumb, white color scheme
 - **Album Art:** Full cover display without blur or fading overlay, sharp corners
@@ -43,14 +43,16 @@ The pissgrind music library contains Music / Album Art, that features / displays
 - **Train & Discover:** Added a "Train & Discover" button that opens an overlay where you can swipe left / rigth(or skip) to train the Recommendation Engine and/or simply discover new songs. Save any song by swiping up to see all available options like save to playlist, add to library, etc.
 - **Swipeable Button**: Added a swipeable button on Home Screen that lets you Shuffle All songs randomly, play "My Mix", a playlist generated from the feedback you give to the Recommendation Enginel, or play a "Genre Mix" that generates a random playlist from any selected genre. Genres can be selected by a long-press on the button.
 - **Recommended Layzy Row:** Added a "Recommended" lazy row on Home Screen, that lets you see all recommended albums based on your feedback
+- **RecommendationsScreen:** Added a seperate RecommendationsScreen, that can be accessed by clicking the "See all ->" button above the Recommended Lazy Row on the Home Screen
 - **Shuffle Settings:** Added a new "Shuffle" settings tab in the settings menu
 - **Algorithm Settings:** Added a new "Algorithm" settings tab in the settings menu
 - **Account Settings:** Added a new "Account" settings tab in the settings menu
 - **Share Button:** Added a new share button in the settings menu, that displays a QR-Code[www.pissgrind.ch] for sharing the app
-- **Clickable Artist / Song Names:** All song titles and artist names are clickable in the NowPlayingScreen, and lead to either the album by clicking on the song title or the artists page by clicking on the artists name 
+- **Clickable Artist / Song Names:** All song titles and artist names are clickable in the NowPlayingScreen, and lead to either the album by clicking on the song title or the artists page by clicking on the artists name
+- **NowPlaying Background:** New Now Playing Background, adapts to Light / Dark Theme
 
 ### Removed
-- Navidrome star/unstar functionality (replaced by local Library)
+- Navidrome star / unstar functionality (replaced by local Library)
 - Navbar item customization
 - Home items configuration
 - "Show Navidrome logo" toggle
