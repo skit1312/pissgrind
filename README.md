@@ -13,10 +13,10 @@
 
 ## About
 
-pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC, heavily modified and rebranded for private use. It connects to a self hosted Navidrome server and provides a streamlined Navidrome music streaming experience with a custom theme and many new features. Currently there are over 10'000 songs from 1000 albums by 550+ artists available to stream for free.
+pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC, heavily modified and rebranded for private use. It connects to a self hosted Navidrome server and provides a streamlined Navidrome music streaming experience with a custom theme and many new features. Currently there are over 10'000 songs from 1000+ albums by 550+ artists available to stream for free.
 
 **Disclaimer / Content Warning**
-The pissgrind music library contains Music / Album Art, that features / displays violent imagery, topics and / or gore, that might be disturbing to certain individiuals. 
+The pissgrind music library contains Music / Album Art, that features / displays violent imagery, topics and / or gore, that might be disturbing to some individiuals. 
 
 ---
 
