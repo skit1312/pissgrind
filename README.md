@@ -13,7 +13,10 @@
 
 ## About
 
-pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC, heavily modified and rebranded for private use. It connects to a self hosted Navidrome server and provides a streamlined Navidrome music streaming experience with a custom theme and many new features.
+pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWorksMC, heavily modified and rebranded for private use. It connects to a self hosted Navidrome server and provides a streamlined Navidrome music streaming experience with a custom theme and many new features. Currently there are over 10'000 songs from 1000 albums by 550+ artists available to stream for free.
+
+**Disclaimer / Content Warning**
+The pissgrind music library contains Music / Album Art, that features / displays violent imagery, topics and / or gore, that might be disturbing to certain individiuals. 
 
 ---
 
@@ -34,6 +37,16 @@ pissgrind is a fork of [Chora](https://github.com/CraftWorksMC/Chora) by CraftWo
 - **Redesigned Now Playing:** Thinner progress bar, smaller thumb, white color scheme
 - **Album Art:** Full cover display without blur or fading overlay, sharp corners
 - **Unified Library Screen:** Albums, artists, songs and playlists in a single view with filter chips and search
+- **Genre Browse Screen:** Browse all available genres on the pissgrind library in a new "Browse Genres" screen
+- **Hero Pager:** A swipeable Hero Pager shows the recently added Albums on the Home Screen
+- **Train:** A train button starts a randomly shuffled playlist where you can train the Recommendation Engine with Thumbs Up / Thumbs Down
+- **Train & Discover:** Added a "Train & Discover" button that opens an overlay where you can swipe left / rigth(or skip) to train the Recommendation Engine and/or simply discover new songs. Save any song by swiping up to see all available options like save to playlist, add to library, etc.
+- **Swipeable Button**: Added a swipeable button on Home Screen that lets you Shuffle All songs randomly, play "My Mix", a playlist generated from the feedback you give to the Recommendation Enginel, or play a "Genre Mix" that generates a random playlist from any selected genre. Genres can be selected by a long-press on the button.
+- **Recommended Layzy Row:** Added a "Recommended" lazy row on Home Screen, that lets you see all recommended albums based on your feedback
+- **Shuffle Settings:** Added a new "Shuffle" settings tab in the settings menu
+- **Algorithm Settings:** Added a new "Algorithm" settings tab in the settings menu
+- **Account Settings:** Added a new "Account" settings tab in the settings menu
+- **Share Button:** Added a new share button in the settings menu, that displays a QR-Code[www.pissgrind.ch] for sharing the app   
 
 ### Removed
 - Navidrome star/unstar functionality (replaced by local Library)
