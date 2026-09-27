@@ -8,4 +8,11 @@
     <string name="radios">Internet Radio</string>
     <string name="playlists">Playlists</string>
     <string name="Settings_Header_Account">Account</string>
+    <string name="Background_Black">Black</string>
+    <string name="Background_PissGrind">PissGrind</string>
+    <string name="Background_Wavy">Wavy</string>
+    <string name="Background_Grain">Grain</string>
+    <string name="Background_Event">Event</string>
+    <string name="Settings_Header_Algorithm">Algorithm</string>
+    <string name="Settings_Header_Shuffle">Shuffle</string>
 </resources>

@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "ch.skit.pissgrind"
+    namespace = "ch.pissgrind"
     compileSdk = 37
 
     androidResources {
@@ -15,18 +15,21 @@ android {
     }
 
     defaultConfig {
-        applicationId = "ch.skit.pissgrind"
-        minSdk = 23
+        applicationId = "ch.pissgrind"
+        minSdk = 26
         targetSdk = 37
-        versionCode = 310
-        versionName = "1.31.0"
+        versionCode = 231
+        versionName = "2.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
     }
-
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -64,7 +67,12 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -118,4 +126,17 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    //icons
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // Feather Icons
+    dependencies {
+        implementation("br.com.devsrsouza.compose.icons:feather:1.1.1")
+    }
+
 }
