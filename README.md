@@ -31,7 +31,7 @@ The pissgrind music library contains Music / Album Art, that features / displays
 - **Recommendation Engine(Algorirhm):** Train your own Recommendation Algorithm, by giving it Feedback. Logs for the Recommendation Engine, can be downloaded to see how the Algorithm makes it's recommendations. Training data is synced to user account, can be wiped
 - **Swipe Gestures:** Swipe to Queue and Swipe to Delete Gestures added in song lazy lists, and for items in the Library
 - **Custom Playlist Covers:** Added ability to choose an image from device storage as a cover image for any playlist
-- **Custom theme:** Dark Theme(PissGreen: #70dd00 and PissBlack: #000000) / Light Theme(PissWhite: #ffffff and PissBlack: #000000) throughout the entire UI
+- **Custom theme:** Customizeable Theming options
 - **Simplified Navigation:** Bottom nav reduced to Home, Search, Library, and Request
 - **Sharp UI:** Consistent 2.dp corner radius across all UI elements (cards, buttons, chips, sheets)
 - **Redesigned Now Playing:** Thinner progress bar, smaller thumb, white color scheme
@@ -69,7 +69,7 @@ The pissgrind music library contains Music / Album Art, that features / displays
 3. Register an account and wait for admin approval
 4. Login and start streaming
 
-Alternatively, add `https://github.com/skit1312/pissgrind` to [Obtainium](https://github.com/ImranR98/Obtainium) for automatic updates.
+Alternatively, add `https://github.com/skit1312/pissgrind` to [Obtainium](https://github.com/ImranR98/Obtainium)
 
 ---
 
