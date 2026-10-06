@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="250" height="250" alt="icon2" src="https://github.com/user-attachments/assets/2d3a455a-4821-4be2-872b-9a685e03b55a" />
+  <img width="75" height="75" alt="icon2" src="https://github.com/user-attachments/assets/2d3a455a-4821-4be2-872b-9a685e03b55a" />
   
   ## pissgrind
 
