@@ -39,7 +39,7 @@ class AudioSettingsManager @Inject constructor(
 
     // Default 5000, range 1000-10000 or ALL (-1)
     val shuffleRangeFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[SHUFFLE_RANGE_KEY] ?: 5000
+        preferences[SHUFFLE_RANGE_KEY] ?: 6000
     }
 
     suspend fun setShuffleRange(range: Int) {

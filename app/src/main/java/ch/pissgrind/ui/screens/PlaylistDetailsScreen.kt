@@ -514,6 +514,7 @@ fun PlaylistDetails(
                 HorizontalSongCard(
                     song = song,
                     modifier = Modifier.animateItem(),
+                    coverArtSize = 256,
                     onClick = {
                         coroutineScope.launch {
                             SongHelper.play(playlistSongs, index, mediaController)

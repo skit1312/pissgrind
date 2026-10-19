@@ -50,6 +50,27 @@ import ch.pissgrind.R
 import ch.pissgrind.fadingEdge
 import ch.pissgrind.ui.elements.bounceClick
 import ch.pissgrind.ui.viewmodels.PlaylistScreenViewModel
+import android.widget.Toast
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextOverflow
+import ch.pissgrind.ui.theme.LocalIsDark
+import ch.pissgrind.ui.theme.LocalLightBackground
+import ch.pissgrind.ui.theme.PissGreen
+import ch.pissgrind.ui.theme.PissBlack
+import kotlinx.coroutines.launch
 
 //region PREVIEWS
 @Preview(showBackground = true)
@@ -82,26 +103,86 @@ fun AddSongToPlaylist(
     setShowDialog: (Boolean) -> Unit,
     viewModel: PlaylistScreenViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val isDark = LocalIsDark.current
+    val accent = if (isDark) PissGreen else PissBlack
+    val lightBg = LocalLightBackground.current
     val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
 
+    val song = songToAddToPlaylist.value
+    val songId = song.mediaMetadata.extras?.getString("navidromeID") ?: ""
+    val songTitle = song.mediaMetadata.title?.toString()?.take(30) ?: "Song"
+
+    // playlistId -> Song-IDs in Reihenfolge (für lastIndexOf beim Entfernen)
+    val playlistSongIds = remember { mutableStateMapOf<String, List<String>>() }
+    // Playlists, die gerade laden oder aktualisiert werden (Spinner + Doppel-Tap-Schutz)
+    val busy = remember { mutableStateListOf<String>() }
+
+    // Beim Öffnen und bei neuen Playlists: Inhalte parallel laden
+    LaunchedEffect(playlists, songId) {
+        playlists.forEach { pl ->
+            val plId = pl.mediaMetadata.extras?.getString("navidromeID") ?: return@forEach
+            if (plId in playlistSongIds || plId in busy) return@forEach
+            busy.add(plId)
+            launch {
+                playlistSongIds[plId] = try {
+                    viewModel.getPlaylistSongIds(plId)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                busy.remove(plId)
+            }
+        }
+    }
+
+    fun toggle(plId: String, plName: String) {
+        if (songId.isBlank() || plId in busy) return
+        val ids = playlistSongIds[plId] ?: return
+        busy.add(plId)
+        coroutineScope.launch {
+            val wasInPlaylist = songId in ids
+            try {
+                if (wasInPlaylist) {
+                    viewModel.removeSongFromPlaylistAwait(plId, ids.lastIndexOf(songId), songId)
+                } else {
+                    viewModel.addSongToPlaylistAwait(plId, songId)
+                }
+                playlistSongIds[plId] = viewModel.getPlaylistSongIds(plId)
+
+                Toast.makeText(
+                    context,
+                    if (wasInPlaylist) "$songTitle removed from $plName" else "$songTitle added to $plName",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                runCatching { playlistSongIds[plId] = viewModel.getPlaylistSongIds(plId) }
+            } finally {
+                busy.remove(plId)
+            }
+        }
+    }
     Dialog(onDismissRequest = { setShowDialog(false) }) {
         Surface(
             shape = RoundedCornerShape(2.dp),
+            color = if (isDark) PissBlack else lightBg,
+            modifier = Modifier.border(1.dp, accent, RoundedCornerShape(2.dp))
         ) {
-            Box(
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // ── Header + X ──
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
                 ) {
-
-                    // Header
                     Text(
                         text = buildAnnotatedString {
                             append(stringResource(R.string.Dialog_Add_To_Playlist).split("/")[0])
                             withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                                append(songToAddToPlaylist.value.mediaMetadata.title)
+                                append(song.mediaMetadata.title)
                             }
                             append(stringResource(R.string.Dialog_Add_To_Playlist).split("/")[1])
                         },
@@ -110,109 +191,131 @@ fun AddSongToPlaylist(
                             fontFamily = FontFamily.Default,
                             fontWeight = FontWeight.Bold
                         ),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .fillMaxWidth()
+                        color = accent,
+                        modifier = Modifier.weight(1f)
                     )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // List
-                    val listFadingEdge =
-                        Brush.verticalGradient(0.75f to Color.Red, 1f to Color.Transparent)
-
-                    Column(
-                        modifier = Modifier
-                            .height(256.dp)
-                            .fadingEdge(listFadingEdge)
-                            .verticalScroll(rememberScrollState())
+                    IconButton(
+                        onClick = { setShowDialog(false) },
+                        modifier = Modifier.size(32.dp)
                     ) {
-                        println("there are ${playlists.size} playlists")
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.x_light),
+                            contentDescription = "Close",
+                            tint = accent,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
 
-                        for (playlist in playlists) {
-                            // Allow ONLY adding local songs to local playlists and navidrome songs to navidrome playlists.
-                            val disabled = songToAddToPlaylist.value.mediaMetadata.extras?.getString("navidromeID")?.startsWith("Local_") == true xor
-                                    (playlist.mediaMetadata.extras?.getString("navidromeID")?.startsWith("Local_") == true)
+                Spacer(modifier = Modifier.height(20.dp))
 
-                            Row(modifier = Modifier
+                // ==== List ====
+                val listFadingEdge =
+                    Brush.verticalGradient(0.75f to Color.Red, 1f to Color.Transparent)
+
+                Column(
+                    modifier = Modifier
+                        .height(256.dp)
+                        .fadingEdge(listFadingEdge)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    for (playlist in playlists) {
+                        val plId = playlist.mediaMetadata.extras?.getString("navidromeID") ?: continue
+                        val plName = playlist.mediaMetadata.title.toString()
+
+                        val disabled = songId.startsWith("Local_") xor plId.startsWith("Local_")
+                        val isBusy = plId in busy
+                        val isChecked = playlistSongIds[plId]?.contains(songId) == true
+
+                        Row(
+                            modifier = Modifier
                                 .padding(bottom = 12.dp)
                                 .height(64.dp)
+                                .fillMaxWidth()
                                 .clip(RoundedCornerShape(2.dp))
-                                .clickable(
-                                    enabled = !disabled
-                                ) {
-                                    if (playlist.mediaMetadata.extras?.getString("navidromeID") ==
-                                        songToAddToPlaylist.value.mediaMetadata.extras?.getString("navidromeID"))
-                                        return@clickable
+                                .clickable(enabled = !disabled && !isBusy) { toggle(plId, plName) },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val artwork = if (plId.startsWith("Local"))
+                                playlist.mediaMetadata.artworkData
+                            else
+                                playlist.mediaMetadata.artworkUri
 
-                                    viewModel.addSongToPlaylist(playlist.mediaMetadata.extras?.getString("navidromeID")
-                                        ?: "",
-                                        songToAddToPlaylist.value.mediaMetadata.extras?.getString(
-                                            "navidromeID"
-                                        ) ?: "")
-                                    setShowDialog(false)
-                                }, verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val artwork = if (playlist.mediaMetadata.extras?.getString("navidromeID")?.startsWith("Local") == true)
-                                    playlist.mediaMetadata.artworkData
-                                else
-                                    playlist.mediaMetadata.artworkUri
+                            SubcomposeAsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(artwork)
+                                    .crossfade(true)
+                                    .diskCacheKey(plId)
+                                    .build(),
+                                contentScale = ContentScale.FillHeight,
+                                contentDescription = "Playlist Image",
+                                alpha = if (disabled) 0.5f else 1f,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                            )
+                            Text(
+                                text = plName,
+                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                                color = if (disabled) accent.copy(0.5f) else accent,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp)
+                                    .weight(1f)
+                            )
 
-                                SubcomposeAsyncImage (
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(artwork)
-                                        .crossfade(true)
-                                        .diskCacheKey(
-                                            playlist.mediaMetadata.extras?.getString("navidromeID") ?: playlist.mediaId
+                            Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                                if (isBusy) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = accent,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Checkbox(
+                                        checked = isChecked,
+                                        onCheckedChange = { toggle(plId, plName) },
+                                        enabled = !disabled,
+                                        colors = CheckboxDefaults.colors(
+                                            checkedColor = accent,
+                                            uncheckedColor = accent,
+                                            checkmarkColor = if (isDark) PissBlack else lightBg,
+                                            disabledCheckedColor = accent.copy(0.3f),
+                                            disabledUncheckedColor = accent.copy(0.3f)
                                         )
-                                        .build(),
-                                    contentScale = ContentScale.FillHeight,
-                                    contentDescription = "Album Image",
-                                    alpha = if (disabled) 0.5f else 1f,
-                                    modifier = Modifier
-                                        .height(64.dp)
-                                        .width(64.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                )
-                                Text(
-                                    text = playlist.mediaMetadata.title.toString(),
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = MaterialTheme.typography.titleLarge.fontSize,
-                                    color = if (disabled) MaterialTheme.colorScheme.onBackground.copy(0.5f) else MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier
-                                        .padding(horizontal = 12.dp)
-                                        .weight(1f)
-                                )
+                                    )
+                                }
                             }
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                    Box(modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 0.dp)) {
-                        Button(
-                            onClick = {
-                                showNewPlaylistDialog.value = true
-                            },
-                            modifier = Modifier
-                                .widthIn(max = 320.dp)
-                                .fillMaxWidth()
-                                .height(50.dp)
-                                .bounceClick()
-                        ) {
-                            Text(stringResource(R.string.Dialog_New_Playlist))
-                        }
-                    }
+                Button(
+                    onClick = { showNewPlaylistDialog.value = true },
+                    modifier = Modifier
+                        .widthIn(max = 320.dp)
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .bounceClick(),
+                    shape = RoundedCornerShape(2.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = accent,
+                        contentColor = if (isDark) PissBlack else lightBg
+                    )
+                ) {
+                    Text(stringResource(R.string.Dialog_New_Playlist))
+                }
 
-                    if (showNewPlaylistDialog.value) {
-                        NewPlaylist(viewModel) { showNewPlaylistDialog.value = it }
-                    }
+                if (showNewPlaylistDialog.value) {
+                    NewPlaylist(viewModel) { showNewPlaylistDialog.value = it }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun NewPlaylist(
@@ -316,7 +419,8 @@ fun DeletePlaylist(
                                 .padding(top = 24.dp, start = 40.dp, end = 40.dp)
                                 .height(50.dp)
                                 .fillMaxWidth()
-                                .bounceClick()
+                                .bounceClick(),
+                            shape = RoundedCornerShape(2.dp)
                         ) {
                             Text(
                                 stringResource(R.string.Action_Remove),

@@ -191,29 +191,6 @@ fun RecommendationsScreen(
             )
         }
 
-        // Genre Profile Summary
-  /*      genreProfile?.let { profile ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val topGenres = profile.genreWeights.entries
-                    .sortedByDescending { it.value }
-                    .take(3)
-
-                topGenres.forEach { (genre, weight) ->
-                    GenreWeightChip(
-                        genre = genre.replaceFirstChar { it.uppercase() },
-                        weight = weight,
-                        color = textColor
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-*/
         // Filter Chips
         Row(
             modifier = Modifier
@@ -339,8 +316,6 @@ fun RecommendationsScreen(
                     onExclude = { albumToExclude = album }
                 )
             }
-
-            //item { Spacer(modifier = Modifier.height(100.dp)) }
         }
     }
 }

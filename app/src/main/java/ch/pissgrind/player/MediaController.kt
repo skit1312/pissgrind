@@ -59,7 +59,7 @@ class MediaControllerManager private constructor(context: Context) : RememberObs
         if (factory == null || factory?.isDone == true) {
             factory = MediaController.Builder(
                 appContext,
-                SessionToken(appContext, ComponentName(appContext, ChoraMediaLibraryService::class.java))
+                SessionToken(appContext, ComponentName(appContext, PissgrindMediaLibraryService::class.java))
             ).buildAsync()
         }
         factory?.addListener(

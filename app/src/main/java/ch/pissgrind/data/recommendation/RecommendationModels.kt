@@ -17,7 +17,7 @@ data class GenreProfile(
 }
 fun AlbumGenreData.getCoverArtUrl(size: Int = 300): String {
     val server = NavidromeManager.getCurrentServer() ?: return ""
-    return "${server.url.trimEnd('/')}/rest/getCoverArt.view?id=${coverArtId}&size=$size&u=${server.username}&t=...&s=...&v=1.16.1&c=Chora&f=json"
+    return "${server.url.trimEnd('/')}/rest/getCoverArt.view?id=${coverArtId}&size=$size&u=${server.username}&t=...&s=...&v=1.16.1&c=pissgrind&f=json"
 }
 
 /**

@@ -24,7 +24,7 @@ fun parseNavidromeAlbumListJSON(
     val passwordSaltArt = NavidromeDataSource.generateSalt(8)
     val passwordHashArt = NavidromeDataSource.md5Hash(navidromePassword + passwordSaltArt)
 
-    val baseCoverArtUrl = "$navidromeUrl/rest/getCoverArt.view?u=$navidromeUsername&t=$passwordHashArt&s=$passwordSaltArt&v=1.16.1&c=Chora&size=500"
+    val baseCoverArtUrl = "$navidromeUrl/rest/getCoverArt.view?u=$navidromeUsername&t=$passwordHashArt&s=$passwordSaltArt&v=1.16.1&c=pissgrind&size=500"
 
     val mediaDataAlbums = subsonicResponse.albumList?.album?.map {
         val mediaItem = it.toMediaItem()
@@ -54,8 +54,8 @@ fun parseNavidromeAlbumJSON(
     val album = mutableListOf<MediaItem>()
 
     selectedAlbum?.songs?.forEach {
-        it.media = "$navidromeUrl/rest/stream.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHash&s=$passwordSalt&v=1.12.0&c=Chora"
-        it.imageUrl = "$navidromeUrl/rest/getCoverArt.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHash&s=$passwordSalt&v=1.16.1&c=Chora&size=500"
+        it.media = "$navidromeUrl/rest/stream.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHash&s=$passwordSalt&v=1.12.0&c=pissgrind"
+        it.imageUrl = "$navidromeUrl/rest/getCoverArt.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHash&s=$passwordSalt&v=1.16.1&c=pissgrind&size=500"
     }
 
     album.add(selectedAlbum?.toMediaItem() ?: MediaItem.EMPTY)

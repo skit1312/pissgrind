@@ -2,7 +2,9 @@
 
 package ch.pissgrind.ui.playing
 
+import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -11,6 +13,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -60,7 +66,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import ch.pissgrind.managers.settings.AppearanceSettingsManager
-import ch.pissgrind.player.ChoraMediaLibraryService
+import ch.pissgrind.player.PissgrindMediaLibraryService
 import ch.pissgrind.ui.theme.PissBlack
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
@@ -79,7 +85,12 @@ import androidx.compose.ui.res.vectorResource
 import ch.pissgrind.R
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
-
+import androidx.compose.runtime.collectAsState
+import ch.pissgrind.data.recommendation.TrainingModeManager
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import ch.pissgrind.ui.theme.LocalLightBackground
+import ch.pissgrind.ui.theme.PissGreen
 
 @kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Preview(
@@ -111,7 +122,8 @@ fun NowPlayingPortrait(
     onAddToPlaylist: () -> Unit = {},
     isInLibrary: Boolean = false,
     isInFavourites: Boolean = false,
-) {
+    currentRating: Boolean? = null,
+    ) {
     val optionsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val iconTextColor by animateColorAsState(
         targetValue = iconColor,
@@ -122,7 +134,8 @@ fun NowPlayingPortrait(
         label = "Animated Text Color"
     )
     val isDark = LocalIsDark.current
-
+    val isPersistentTraining by TrainingModeManager.isPersistentTraining.collectAsState()
+    val isTrainingPlaylist by TrainingModeManager.isTrainingPlaylist.collectAsState()
     val context = LocalContext.current
     val settingsManager = remember { AppearanceSettingsManager(context) }
     val titleAlignment by settingsManager.nowPlayingTitleAlignment.collectAsStateWithLifecycle(
@@ -148,7 +161,7 @@ fun NowPlayingPortrait(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 // Album Art
-                val player = ChoraMediaLibraryService.getInstance()?.player
+                val player = PissgrindMediaLibraryService.getInstance()?.player
                 val dragOffset = remember { Animatable(0f) }
                 val coroutineScope = rememberCoroutineScope()
 
@@ -384,7 +397,7 @@ fun NowPlayingPortrait(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ChoraMediaLibraryService.getInstance()?.player?.let { player ->
+                PissgrindMediaLibraryService.getInstance()?.player?.let { player ->
                     ShuffleButton(player, iconTextColor, Modifier.size(24.dp))
                     PreviousSongButton(player, iconTextColor, Modifier.size(40.dp))
                     PlayPauseButton(player, iconTextColor, Modifier.size(88.dp))
@@ -394,14 +407,43 @@ fun NowPlayingPortrait(
             }
 
             // Training Buttons
-            TrainingButtons(
-                isVisible = isTrainingMode,
-                currentSongId = metadata?.title?.toString() ?: "",
-                color = iconTextColor,
-                onThumbsUp = onTrainingThumbsUp,
-                onThumbsDown = onTrainingThumbsDown,
-                onStopTraining = onStopTraining
-            )
+            AnimatedVisibility(
+                visible = isTrainingMode,
+                enter = expandVertically(
+                    animationSpec = tween(350, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Top
+                ) + fadeIn(animationSpec = tween(350)),
+                exit = shrinkVertically(
+                    animationSpec = tween(300, easing = FastOutSlowInEasing),
+                    shrinkTowards = Alignment.Top
+                ) + fadeOut(animationSpec = tween(200))
+            ) {
+                TrainingButtons(
+                    isVisible = true,
+                    currentSongId = metadata?.extras?.getString("navidromeID") ?: "",
+                    currentRating = currentRating,
+                    color = iconTextColor,
+                    onThumbsUp = onTrainingThumbsUp,
+                    onThumbsDown = onTrainingThumbsDown,
+                    onStopTraining = onStopTraining
+                )
+            }
+
+            // Training Toggle
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                TrainingChip(
+                    enabled = isPersistentTraining || isTrainingPlaylist,
+                    onToggle = { on ->
+                        TrainingModeManager.savePersistentTraining(context, on)
+                        if (!on) TrainingModeManager.stopTrainingPlaylist()
+                    }
+                )
+            }
 
             // Swipe-Up Detection Area
             Spacer(
@@ -452,16 +494,16 @@ fun NowPlayingPortrait(
                         onRemoveFromFavourites()
                         showOptionsMenu = true
                     },
+                    onAddToPlaylist = {
+                        onAddToPlaylist()
+                        showOptionsMenu = true
+                    },
                     onAddToLibrary = {
                         onAddToLibrary()
                         showOptionsMenu = true
                     },
                     onRemoveFromLibrary = {
                         onRemoveFromLibrary()
-                        showOptionsMenu = true
-                    },
-                    onAddToPlaylist = {
-                        onAddToPlaylist()
                         showOptionsMenu = true
                     },
                     onToggleQueue = {
@@ -473,6 +515,49 @@ fun NowPlayingPortrait(
         }
     }
 }
+    @Composable
+    private fun TrainingChip(
+        enabled: Boolean,
+        onToggle: (Boolean) -> Unit
+    ) {
+        val isDark = LocalIsDark.current
+        val lightBg = LocalLightBackground.current
+        val accent = if (isDark) PissGreen else PissBlack
+        val surfaceCol = if (isDark) PissBlack else lightBg
+
+        FilterChip(
+            selected = enabled,
+            onClick = { onToggle(!enabled) },
+            label = {
+                Text(
+                    text = if (enabled) "Training: ON" else "Training: OFF",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.power_light),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+            },
+            shape = RoundedCornerShape(2.dp),
+            colors = FilterChipDefaults.filterChipColors(
+                containerColor = surfaceCol,
+                labelColor = accent,
+                iconColor = accent,
+                selectedContainerColor = accent,
+                selectedLabelColor = surfaceCol,
+                selectedLeadingIconColor = surfaceCol
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+                enabled = true,
+                selected = enabled,
+                borderColor = accent,
+                selectedBorderColor = accent
+            )
+        )
+    }
 
 @Composable
 private fun NowPlayingOptionsSheet(
@@ -501,17 +586,17 @@ private fun NowPlayingOptionsSheet(
         )
 
         NowPlayingSheetItem(
-            icon = if (isInLibrary) R.drawable.minus_circle_fill else R.drawable.plus_circle_light,
-            label = if (isInLibrary) "Remove from Library" else "Add to Library",
-            color = iconColor,
-            onClick = if (isInLibrary) onRemoveFromLibrary else onAddToLibrary
-        )
-
-        NowPlayingSheetItem(
             icon = R.drawable.plus_light,
             label = "Add to Playlist",
             color = iconColor,
             onClick = onAddToPlaylist
+        )
+
+        NowPlayingSheetItem(
+            icon = if (isInLibrary) R.drawable.minus_circle_fill else R.drawable.plus_circle_light,
+            label = if (isInLibrary) "Remove from Library" else "Add to Library",
+            color = iconColor,
+            onClick = if (isInLibrary) onRemoveFromLibrary else onAddToLibrary
         )
 
         NowPlayingSheetItem(

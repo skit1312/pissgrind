@@ -132,7 +132,7 @@ class NavidromeDataSource @Inject constructor() {
             parameters.append("s", salt)
             musicFolderIds?.forEach { parameters.append("musicFolderId", it.toString()) }
             parameters.append("v", "1.16.1")
-            parameters.append("c", "Chora")
+            parameters.append("c", "pissgrind")
             parameters.append("f", "json")
         }.buildString()
 

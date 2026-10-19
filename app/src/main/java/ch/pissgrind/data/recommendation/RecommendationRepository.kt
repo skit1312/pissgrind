@@ -29,7 +29,8 @@ class RecommendationRepository @Inject constructor(
     private val trainingDataManager: TrainingDataManager,
     private val genreRepository: GenreRepository,
     private val algorithmLogger: AlgorithmLogger,
-    private val excludedAlbumsManager: ExcludedAlbumsManager
+    private val excludedAlbumsManager: ExcludedAlbumsManager,
+    private val songRatingStore: SongRatingStore
 ) {
     private val TAG = "RecommendationRepo"
     private val engine = RecommendationEngine(genreRepository)
@@ -195,12 +196,31 @@ class RecommendationRepository @Inject constructor(
     }
 
     /**
-     * Submit training feedback and invalidate cache.
+     * Submit training feedback. Repeated identical ratings for the same song are ignored.
      */
-    suspend fun submitFeedback(albumId: String, genres: List<String>, liked: Boolean, artistId: String = "", artistName: String = "") {
+    suspend fun submitFeedback(
+        albumId: String,
+        genres: List<String>,
+        liked: Boolean,
+        artistId: String = "",
+        artistName: String = "",
+        songId: String = ""
+    ): RatingResult {
+        val result = if (songId.isNotBlank()) {
+            songRatingStore.setRating(songId, liked, albumId)
+        } else {
+            RatingResult.NEW
+        }
+
+        if (result == RatingResult.UNCHANGED) {
+            Log.d(TAG, "Feedback for $songId ignored (already rated)")
+            return result
+        }
+
         trainingDataManager.addFeedback(albumId, genres, liked, artistId, artistName)
         cachedRecommendations = null
         lastRefreshTime = 0
+        return result
     }
 
     /**
@@ -235,7 +255,7 @@ class RecommendationRepository @Inject constructor(
         return result
     }
     /**
-     * Recompute recommendations from in-memory caches (NO network).
+     * Recompute recommendations from in memory caches (NO network).
      * Used when the manual exclude list changes. Falls back to a full
      * network refresh only if the album cache isn't populated yet.
      */
@@ -255,7 +275,7 @@ class RecommendationRepository @Inject constructor(
             config
         )
 
-        // Union of training-based and manual excludes
+        // Union of training based and manual excludes
         val genreAdjustments = trainingDataManager.getGenreAdjustments()
         val trainingExcludes = trainingDataManager.getExcludedAlbumIds()
         val manualExcludes = excludedAlbumsManager.excludedAlbumIds.first()
@@ -471,7 +491,7 @@ class RecommendationRepository @Inject constructor(
             append("&t=$token")
             append("&s=$salt")
             append("&v=1.16.1")
-            append("&c=Chora")
+            append("&c=pissgrind")
             append("&f=json")
             params.forEach { (key, value) ->
                 append("&$key=$value")

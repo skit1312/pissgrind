@@ -68,7 +68,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @AndroidEntryPoint
-class ChoraMediaLibraryService : MediaLibraryService() {
+class PissgrindMediaLibraryService : MediaLibraryService() {
     //region Vars
     lateinit var player: Player
     var session: MediaLibrarySession? = null
@@ -86,9 +86,9 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     @Inject lateinit var playlistRepository: PlaylistRepository
 
     companion object {
-        private var instance: ChoraMediaLibraryService? = null
+        private var instance: PissgrindMediaLibraryService? = null
 
-        fun getInstance(): ChoraMediaLibraryService? {
+        fun getInstance(): PissgrindMediaLibraryService? {
             return instance
         }
     }
@@ -299,7 +299,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 Log.e("PLAYER", error.stackTraceToString())
 
                 Toast.makeText(
-                    this@ChoraMediaLibraryService,
+                    this@PissgrindMediaLibraryService,
                     PlaybackException.getErrorCodeName(error.errorCode),
                     Toast.LENGTH_SHORT
                 ).show()
@@ -376,7 +376,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 if (session.isAutoCompanionController(controller))
                     getHomeScreenItems()
 
-                this@ChoraMediaLibraryService.session?.notifyChildrenChanged(
+                this@PissgrindMediaLibraryService.session?.notifyChildrenChanged(
                     "nodeHOME",
                     aHomeScreenItems.size,
                     null
@@ -722,7 +722,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                         album.apply {
                             this.mediaMetadata.extras?.putString(
                                 MediaConstants.EXTRAS_KEY_CONTENT_STYLE_GROUP_TITLE,
-                                this@ChoraMediaLibraryService.getString(R.string.recently_played)
+                                this@PissgrindMediaLibraryService.getString(R.string.recently_played)
                             )
                         }
                     )
@@ -733,7 +733,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                         album.apply {
                             this.mediaMetadata.extras?.putString(
                                 MediaConstants.EXTRAS_KEY_CONTENT_STYLE_GROUP_TITLE,
-                                this@ChoraMediaLibraryService.getString(R.string.most_played)
+                                this@PissgrindMediaLibraryService.getString(R.string.most_played)
                             )
                         }
                     )

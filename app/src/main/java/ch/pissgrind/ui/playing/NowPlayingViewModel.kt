@@ -13,11 +13,14 @@ import androidx.palette.graphics.Palette
 import ch.pissgrind.data.local.entity.CollectionItem
 import ch.pissgrind.data.local.entity.CollectionItemType
 import ch.pissgrind.data.recommendation.AlgorithmLogger
+import ch.pissgrind.data.recommendation.RatingResult
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import ch.pissgrind.data.recommendation.RecommendationRepository
+import ch.pissgrind.data.recommendation.SongRating
+import ch.pissgrind.data.recommendation.SongRatingStore
 import ch.pissgrind.data.recommendation.TrainingDataManager
 import ch.pissgrind.data.recommendation.TrainingModeManager
 import ch.pissgrind.data.repository.CollectionRepository
@@ -52,7 +55,8 @@ class NowPlayingViewModel @Inject constructor(
     private val recommendationRepository: RecommendationRepository,
     private val algorithmLogger: AlgorithmLogger,
     private val playlistRepository: PlaylistRepository,
-    private val collectionRepository: CollectionRepository
+    private val collectionRepository: CollectionRepository,
+    private val songRatingStore: SongRatingStore
 ) : ViewModel() {
 
     private val _isCurrentSongInFavourites = MutableStateFlow(false)
@@ -87,6 +91,12 @@ class NowPlayingViewModel @Inject constructor(
 
     private val _meta = MutableStateFlow(MediaItem.EMPTY)
     val metadata = _meta.asStateFlow()
+
+    val songRatings: StateFlow<Map<String, SongRating>> = songRatingStore.ratings
+
+    init {
+        viewModelScope.launch { songRatingStore.load() }
+    }
 
 // ===== TRAINING MODE =====
 
@@ -189,12 +199,14 @@ class NowPlayingViewModel @Inject constructor(
     ) {
         if (albumId.isBlank()) return
 
-        val trackId = songId.ifBlank { albumId }
-        if (trackId in _feedbackGiven.value) return
-
         viewModelScope.launch {
-            _feedbackGiven.value = _feedbackGiven.value + trackId
-            recommendationRepository.submitFeedback(albumId, genres, liked, artistId, artistName)
+            val result = recommendationRepository.submitFeedback(
+                albumId, genres, liked, artistId, artistName, songId
+            )
+            if (result == RatingResult.UNCHANGED) {
+                Log.d("NowPlayingVM", "Feedback ignored, song already rated (liked=$liked)")
+                return@launch
+            }
 
             val albumScore = trainingDataManager.getAlbumScore(albumId)
 
@@ -209,18 +221,13 @@ class NowPlayingViewModel @Inject constructor(
                     else -> 0
                 }
                 algorithmLogger.logThumbsDown(
-                    albumId,
-                    albumName,
-                    artistName,
-                    genres,
-                    albumScore,
-                    artistStrikes
+                    albumId, albumName, artistName, genres, albumScore, artistStrikes
                 )
             }
 
             Log.d(
                 "NowPlayingVM",
-                "Training feedback: albumId=$albumId, liked=$liked, score=$albumScore, artist=$artistName ($artistId)"
+                "Training feedback ($result): albumId=$albumId, liked=$liked, score=$albumScore, artist=$artistName ($artistId)"
             )
             TrainingDataEvent.markChanged()
         }

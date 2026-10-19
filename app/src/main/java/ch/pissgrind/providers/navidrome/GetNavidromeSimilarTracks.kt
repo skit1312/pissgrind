@@ -21,9 +21,9 @@ fun parseNavidromeSimilarSongsJSON(
     val passwordSaltArt = NavidromeDataSource.generateSalt(8)
     val passwordHashArt = NavidromeDataSource.md5Hash(navidromePassword + passwordSaltArt)
 
-    val baseCoverArtUrl = "$navidromeUrl/rest/getCoverArt.view?u=$navidromeUsername&t=$passwordHashArt&s=$passwordSaltArt&v=1.16.1&c=Chora&size=600"
+    val baseCoverArtUrl = "$navidromeUrl/rest/getCoverArt.view?u=$navidromeUsername&t=$passwordHashArt&s=$passwordSaltArt&v=1.16.1&c=pissgrind&size=128"
     subsonicResponse.sonicMatch?.forEach {
-        it.media = "$navidromeUrl/rest/stream.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHashMedia&s=$passwordSaltMedia&v=1.12.0&c=Chora"
+        it.media = "$navidromeUrl/rest/stream.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHashMedia&s=$passwordSaltMedia&v=1.12.0&c=pissgrind"
     }
 
     val mediaDataSimilarSongs = subsonicResponse.sonicMatch?.map {

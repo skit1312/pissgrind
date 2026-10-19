@@ -19,7 +19,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -95,7 +94,7 @@ import ch.pissgrind.data.recommendation.TrainingModeManager
 import ch.pissgrind.managers.LocalProviderManager
 import ch.pissgrind.managers.NavidromeManager
 import ch.pissgrind.managers.settings.AppearanceSettingsManager
-import ch.pissgrind.player.ChoraMediaLibraryService
+import ch.pissgrind.player.PissgrindMediaLibraryService
 import ch.pissgrind.player.rememberManagedMediaController
 import ch.pissgrind.ui.elements.dialogs.OnboardingDialog
 import ch.pissgrind.ui.playing.NowPlayingContent
@@ -150,7 +149,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val serviceIntent = Intent(applicationContext, ChoraMediaLibraryService::class.java)
+        val serviceIntent = Intent(applicationContext, PissgrindMediaLibraryService::class.java)
         this@MainActivity.startService(serviceIntent)
 
         TrainingModeManager.init(applicationContext)
@@ -559,7 +558,7 @@ class MainActivity : ComponentActivity() {
 
                 @androidx.annotation.OptIn(UnstableApi::class)
                 override fun onActivityDestroyed(activity: Activity) {
-                    ChoraMediaLibraryService.getInstance()?.saveState()
+                    PissgrindMediaLibraryService.getInstance()?.saveState()
                     this@MainActivity.stopService(serviceIntent)
                 }
             })

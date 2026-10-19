@@ -32,7 +32,7 @@ fun S_ShuffleScreen(
     audioSettingsManager: AudioSettingsManager
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val shuffleRange by audioSettingsManager.shuffleRangeFlow.collectAsStateWithLifecycle(initialValue = 5000)
+    val shuffleRange by audioSettingsManager.shuffleRangeFlow.collectAsStateWithLifecycle(initialValue = 6000)
     val isDark = LocalIsDark.current
 
     // Theme colors
@@ -89,7 +89,7 @@ fun S_ShuffleScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Determines how many Songs the Randomizer picks from when creating Shuffle All, Train Playlists and Discovery Playlists. A higher Number gives more Variety but takes longer to load. A lower Number loads faster but may repeat Songs sooner.",
+                text = "Determines how many Songs the Randomizer picks from when creating Shuffle All and Discovery Playlists. A higher Number gives more Variety but takes longer to load. A lower Number loads faster but may repeat Songs sooner. This only affects the initial loading time, playback is not affected.",
                 style = MaterialTheme.typography.bodySmall,
                 color = subtleColor
             )
@@ -191,13 +191,21 @@ fun S_ShuffleScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "How it Works",
+                    text = "Info",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = subtleColor
                 )
+
                 Text(
-                    text = "• Lower Range (1000–3000): Fast Loading, relatively low Variety. Good for slow Connections.",
+                    text = "Setting the range to under 6000 is only neccessary if a 5G/WiFI connection is not available.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = subtleColor
+                )
+
+                Text(
+                    text = "• Lower Range (1000-4000): Fast Loading, relatively low Variety. Good for slow Connections.",
                     style = MaterialTheme.typography.bodySmall,
                     color = subtleColor
                 )
@@ -207,7 +215,7 @@ fun S_ShuffleScreen(
                     color = subtleColor
                 )
                 Text(
-                    text = "• All: Picks from the entire Pissgrind Library. Best Variety but slowest to load. A stable 5G Connection is recommended if using Mobile Data.",
+                    text = "• All Songs: Picks from the entire pissgrind Library. Best Variety but slowest to load.",
                     style = MaterialTheme.typography.bodySmall,
                     color = subtleColor
                 )

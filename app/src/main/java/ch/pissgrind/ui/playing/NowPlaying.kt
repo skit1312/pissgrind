@@ -98,6 +98,9 @@ fun NowPlayingContent(
 
         val bgCoroutineScope = rememberCoroutineScope()
         val appearanceSettingsManager = remember { AppearanceSettingsManager(acontext) }
+        val songRatings by viewModel.songRatings.collectAsStateWithLifecycle()
+        val currentNavidromeId = metadata?.extras?.getString("navidromeID") ?: ""
+        val currentRating = songRatings[currentNavidromeId]?.liked   // true / false / null
 
         NowPlayingPortrait(
             mediaController = mediaController,
@@ -115,8 +118,9 @@ fun NowPlayingContent(
             },
             onNavigateToAlbum = onNavigateToAlbum,
             onNavigateToArtist = onNavigateToArtist,
+            currentRating = currentRating,
             onTrainingThumbsUp = {
-                val songId = mediaController?.currentMediaItem?.mediaId ?: ""
+                val songId = metadata?.extras?.getString("navidromeID") ?: ""
                 val albumId = metadata?.extras?.getString("albumId") ?: ""
                 val artistId = metadata?.extras?.getString("artistId") ?: ""
                 val artistName = metadata?.artist?.toString() ?: ""
@@ -129,8 +133,8 @@ fun NowPlayingContent(
                 viewModel.submitFeedback(albumId, albumName, artistName, genres, liked = true, artistId = artistId, songId = songId)
             },
             onTrainingThumbsDown = {
-                val albumId = metadata?.extras?.getString("albumId") ?: ""
                 val songId = metadata?.extras?.getString("navidromeID") ?: ""
+                val albumId = metadata?.extras?.getString("albumId") ?: ""
                 val artistId = metadata?.extras?.getString("artistId") ?: ""
                 val artistName = metadata?.artist?.toString() ?: ""
                 val albumName = metadata?.albumTitle?.toString() ?: ""

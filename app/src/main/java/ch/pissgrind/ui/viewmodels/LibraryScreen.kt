@@ -186,12 +186,12 @@ fun LibraryScreen(
                     .weight(1f)
             ) {
                 if (!isSearching) {
-                    // ===== DISCOVER MODE (empty-ish screen) =====
+                    // ===== DISCOVER MODE =====
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 50.dp)
+                        contentPadding = PaddingValues(bottom = 8.dp)
                     ) {
-                        // Two half-width action buttons (Browse Genres + Recently Added)
+                        // Action Buttons (Browse Genres + Recently Added)
                         item {
                             Row(
                                 modifier = Modifier
@@ -254,7 +254,7 @@ fun LibraryScreen(
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 100.dp)
+                        contentPadding = PaddingValues(bottom = 0.dp)
                     ) {
                         when (selectedTab) {
                             LibraryTab.ALL -> {
@@ -420,7 +420,6 @@ private fun ArtistListItem(artist: MediaData.Artist, navHostController: NavHostC
             }
             .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
-        // Artists are round to visually distinguish them (Spotify-style)
         if (coverUrl != null) {
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(context).data(coverUrl).crossfade(true).build(),

@@ -66,7 +66,7 @@ import androidx.tv.material3.MaterialTheme
 import ch.pissgrind.data.repository.CollectionRepository
 import ch.pissgrind.ui.theme.LocalIsDark
 import kotlin.time.Duration.Companion.milliseconds
-
+import androidx.compose.ui.draw.drawBehind
 
 @Stable
 @Serializable
@@ -94,11 +94,11 @@ fun HomeScreen(
     val mostPlayedAlbums by viewModel.mostPlayedAlbums.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val recommendations by viewModel.recommendations.collectAsStateWithLifecycle()
-    val topGenre by viewModel.topGenre.collectAsStateWithLifecycle()
+    //val topGenre by viewModel.topGenre.collectAsStateWithLifecycle()
     val myMix by viewModel.myMix.collectAsStateWithLifecycle()
-    val genreMixCovers by viewModel.genreMixCovers.collectAsStateWithLifecycle()
+    //val genreMixCovers by viewModel.genreMixCovers.collectAsStateWithLifecycle()
     val state = rememberPullToRefreshState()
-    val selectedShuffleGenre by viewModel.selectedShuffleGenre.collectAsStateWithLifecycle()
+    //val selectedShuffleGenre by viewModel.selectedShuffleGenre.collectAsStateWithLifecycle()
     val isDark = LocalIsDark.current
 
     var showGenreSheet by remember { mutableStateOf(false) }
@@ -107,7 +107,7 @@ fun HomeScreen(
     val rippleXOffset = LocalWindowInfo.current.containerSize.width / 2
     val rippleYOffset = dpToPx(WindowInsets.statusBars.asPaddingValues().calculateTopPadding().value.roundToInt())
 
-    val sliderPagerState = rememberPagerState(pageCount = { 3 })
+    //val sliderPagerState = rememberPagerState(pageCount = { 3 })
 
     val onRefresh: () -> Unit = {
         viewModel.loadHomeScreenData()
@@ -136,11 +136,11 @@ fun HomeScreen(
                 )
             ) {
                 Image(
-                    painter = if (isDark) painterResource(R.drawable.transparentheader) else painterResource(R.drawable.transparentheaderblack),
-                    contentDescription = "Pissgrind",
+                    painter = if (isDark) painterResource(R.drawable.logofullpgreen) else painterResource(R.drawable.logofullpblack ),
+                    contentDescription = "sticky header pissgrind logo",
                     modifier = Modifier
                         .height(78.dp)
-                        .offset(x = (-13).dp)
+                        .offset(x = (-40).dp)
                         .weight(1f),
                     alignment = Alignment.CenterStart
                 )
@@ -180,7 +180,7 @@ fun HomeScreen(
                         )
 
                         val pagerState =
-                            rememberPagerState(pageCount = { minOf(recentAlbums.size, 10) })
+                            rememberPagerState(pageCount = { minOf(recentAlbums.size, 15) })
 
                         LaunchedEffect(pagerState) {
                             while (true) {
@@ -301,13 +301,13 @@ fun HomeScreen(
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            repeat(minOf(pagerState.pageCount, 10)) { index ->
+                            repeat(minOf(pagerState.pageCount, 15)) { index ->
                                 Box(
                                     modifier = Modifier
                                         .padding(horizontal = 2.dp)
-                                        .size(if (pagerState.currentPage % 10 == index) 8.dp else 4.dp)
+                                        .size(if (pagerState.currentPage % 15 == index) 8.dp else 4.dp)
                                         .background(
-                                            if (pagerState.currentPage % 10 == index)
+                                            if (pagerState.currentPage % 15 == index)
                                                 if (isDark) PissGreen else PissBlack
                                             else
                                                 (if (isDark) PissGreen else PissBlack).copy(alpha = 0.5f),
@@ -318,194 +318,96 @@ fun HomeScreen(
                         }
                     }
                 }
-
-                // ===== TRAIN + TRAIN & DISCOVER BUTTONS =====
-                item(key = "train_buttons") {
+                // ===== ACTION GRID =====
+                item(key = "action_grid") {
                     Spacer(modifier = Modifier.height(20.dp))
+
+                    var loadingAction by remember { mutableStateOf<String?>(null) }
+                    val accent = if (isDark) PissGreen else PissBlack
+                    val surfaceCol = if (isDark) PissBlack else lightBg
+
+                    fun runAction(id: String, block: suspend () -> Unit) {
+                        if (loadingAction != null) return
+                        loadingAction = id
+                        coroutineScope.launch {
+                            try { block() } finally { loadingAction = null }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            .padding(horizontal = 12.dp)
+                            .height(184.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .border(1.dp, accent, RoundedCornerShape(2.dp))
                     ) {
-                        // Train Button
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val songs = viewModel.getAllSongsShuffled()
-                                    if (songs.isNotEmpty()) {
-                                        TrainingModeManager.startTrainingPlaylist()
-                                        SongHelper.play(
-                                            mediaItems = songs,
-                                            index = 0,
-                                            mediaController = mediaController
-                                        )
-                                        scaffoldState.bottomSheetState.expand()
-                                    }
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isDark) PissGreen else lightBg,
-                                contentColor = PissBlack
-                            ),
-                            shape = RoundedCornerShape(2.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp)
-                                .border(
-                                    1.dp,
-                                    if (isDark) PissGreen else PissBlack,
-                                    RoundedCornerShape(2.dp)
-                                )
-
-
+                        // === My Mix ===
+                        MyMixTile(
+                            modifier = Modifier.weight(2f).fillMaxHeight(),
+                            myMix = myMix,
+                            filled = false,
+                            isLoading = loadingAction == "mymix",
+                            enabled = loadingAction == null,
+                            accent = accent,
+                            surfaceCol = surfaceCol,
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Text("Train", fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.thumbs_up_light),
-                                    contentDescription = null,
-                                    tint = PissBlack,
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .offset(y = (-2).dp)
-                                )
+                            runAction("mymix") {
+                                TrainingModeManager.stopTrainingPlaylist()
+                                val albumIds = viewModel.getMyMixAlbumIds()
+                                val songs = mutableListOf<MediaItem>()
+                                albumIds.take(10).forEach { id ->
+                                    songs.addAll(viewModel.getAlbumSongs(id).drop(1))
+                                }
+                                if (songs.isNotEmpty()) {
+                                    SongHelper.play(
+                                        shuffleNoConsecutiveAlbums(songs), 0, mediaController
+                                    )
+                                }
                             }
                         }
 
-                        // TRAIN & DISCOVER Button
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
+                        // === Shuffle + Discover ===
+                        Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                            GridActionTile(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                label = "Shuffle All",
+                                subtitle = null,
+                                iconRes = R.drawable.shuffle_angular_light,
+                                filled = false,
+                                isLoading = loadingAction == "shuffle",
+                                enabled = loadingAction == null,
+                                accent = accent,
+                                surfaceCol = surfaceCol
+                            ) {
+                                runAction("shuffle") {
+                                    TrainingModeManager.stopTrainingPlaylist()
+                                    val songs = viewModel.getAllSongsShuffled()
+                                    if (songs.isNotEmpty()) {
+                                        SongHelper.play(songs, 0, mediaController)
+                                    }
+                                }
+                            }
+
+                            HorizontalDivider(thickness = 1.dp, color = accent)
+
+                            GridActionTile(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                label = "Discover",
+                                //subtitle = "",
+                                iconRes = R.drawable.arrows_left_right_light,
+                                filled = false,
+                                isLoading = loadingAction == "discover",
+                                enabled = loadingAction == null,
+                                accent = accent,
+                                surfaceCol = surfaceCol
+                            ) {
+                                runAction("discover") {
                                     val songs = viewModel.getAllSongsShuffled()
                                     if (songs.isNotEmpty()) {
                                         onQuickTrainClick(songs)
                                     }
                                 }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = PissBlack,
-                                contentColor = if (isDark) PissGreen else lightBg
-                            ),
-                            shape = RoundedCornerShape(2.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp)
-                                .border(1.dp, if (isDark) PissGreen else PissBlack, RoundedCornerShape(2.dp))
-                        ) {
-
-                            Text("Train & Discover", fontWeight = FontWeight.Bold)
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.arrows_left_right_light),
-                                contentDescription = null,
-                                tint = if (isDark) PissGreen else lightBg,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                }
-
-                // === Slider Button My Mix, Shuffle All, Genre Mix ===
-                item(key = "slider_button") {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
-                            .height(120.dp)
-                            .border(
-                                1.dp,
-                                if (isDark) PissGreen else PissBlack,
-                                RoundedCornerShape(2.dp)
-                            )
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(if (isDark) PissBlack else lightBg),
-                    ) {
-                        HorizontalPager(
-                            state = sliderPagerState,
-                            modifier = Modifier.fillMaxSize()
-                        ) { page ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .combinedClickable(
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                TrainingModeManager.stopTrainingPlaylist()
-                                                when (page) {
-                                                    0 -> {
-                                                        val songs = viewModel.getAllSongsShuffled()
-                                                        if (songs.isNotEmpty()) {
-                                                            SongHelper.play(songs, 0, mediaController)
-                                                        }
-                                                    }
-                                                    2 -> {
-                                                        coroutineScope.launch {
-                                                            val albumIds = viewModel.getGenreMixAlbumIds()
-                                                            val songs = mutableListOf<MediaItem>()
-                                                            albumIds.take(5).forEach { id ->
-                                                                val albumSongs = viewModel.getAlbumSongs(id)
-                                                                songs.addAll(albumSongs.drop(1))
-                                                            }
-                                                            if (songs.isNotEmpty()) {
-                                                                SongHelper.play(songs.shuffled(), 0, mediaController)
-                                                            }
-                                                        }
-                                                    }
-                                                    1 -> {
-                                                        val albumIds = viewModel.getMyMixAlbumIds()
-                                                        val songs = mutableListOf<MediaItem>()
-                                                        albumIds.take(5).forEach { id ->
-                                                            val albumSongs = viewModel.getAlbumSongs(id)
-                                                            songs.addAll(albumSongs.drop(1))
-                                                        }
-                                                        if (songs.isNotEmpty()) {
-                                                            SongHelper.play(shuffleNoConsecutiveAlbums(songs), 0, mediaController)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        onLongClick = {
-                                            if (page == 2) showGenreSheet = true
-                                        }
-                                    )
-                            ) {
-                                when (page) {
-                                    0 -> ShuffleAllSlide()
-                                    1 -> MyMixSlide(myMix, context)
-                                    2 -> GenreMixSlide(topGenre, selectedShuffleGenre, genreMixCovers, context)
-                                }
-                            }
-                        }
-
-                        // Page indicators
-                        Row(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            repeat(3) { index ->
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 2.dp)
-                                        .size(if (sliderPagerState.currentPage % 10 == index) 8.dp else 4.dp)
-                                        .background(
-                                            if (sliderPagerState.currentPage % 10 == index)
-                                                if (isDark) PissGreen else PissBlack
-                                            else
-                                                (if (isDark) PissGreen else PissBlack).copy(alpha = 0.5f),
-                                            RoundedCornerShape(1.dp)
-                                        )
-                                )
                             }
                         }
                     }
@@ -723,7 +625,100 @@ fun HomeScreen(
             }
 }
 
-// ===== REUSABLE COMPONENTS =====
+
+@Composable
+private fun MyMixTile(
+    modifier: Modifier = Modifier,
+    myMix: List<ScoredAlbum>,
+    filled: Boolean = true,
+    isLoading: Boolean,
+    enabled: Boolean,
+    accent: Color,
+    surfaceCol: Color,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val bg = if (filled) accent else surfaceCol
+    val fg = if (filled) surfaceCol else accent
+    Box(
+        modifier = modifier
+            .background(bg)
+            .drawBehind {
+                val stroke = 1.dp.toPx()
+                drawLine(
+                    color = accent,
+                    start = Offset(size.width - stroke / 2, 0f),
+                    end = Offset(size.width - stroke / 2, size.height),
+                    strokeWidth = stroke
+                )
+            }
+            .clickable(enabled = enabled) { onClick() }
+            .padding(12.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(36.dp)
+                    .align(Alignment.Center),
+                color = fg,
+                strokeWidth = 3.dp
+            )
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Title + Icon
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "My Mix",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = fg
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.music_notes_light),
+                        contentDescription = null,
+                        tint = fg,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = if (myMix.isNotEmpty())
+                        "Songs from ${myMix.size} Albums\nbased on your Preferences"
+                    else
+                        "Play some music to\nbuild your Mix",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = fg.copy(alpha = 0.85f)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                if (myMix.isNotEmpty()) {
+                    Box(modifier = Modifier.height(75.dp).fillMaxWidth()) {   // REMEMBER TO CHANGE FOR PROFILES UPDATE -> BACK TO 56.dp!!!!!!!!!!!!!!!!!
+                        myMix.take(10).forEachIndexed { index, album ->
+                            SubcomposeAsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(album.getCoverArtUrl())
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .offset(x = (index * 18).dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .border(1.dp, fg, RoundedCornerShape(2.dp))
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun SectionHeaderWithAction(title: String, onSeeAll: () -> Unit) {
     val isDark = LocalIsDark.current
@@ -780,7 +775,7 @@ private fun AlbumCard(
     ) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
-                .data(albumMeta.artworkUri?.toString()?.replace("size=128", "size=128"))
+                .data(albumMeta.artworkUri?.toString()?.replace("size=128", "size=64"))
                 .crossfade(true)
                 .build(),
             contentDescription = "Album Cover",
@@ -862,6 +857,7 @@ private fun RecommendedAlbumCard(
         )
     }
 }
+/*
 @Composable
 private fun ShuffleAllSlide() {
     val isDark = LocalIsDark.current
@@ -1063,7 +1059,7 @@ private fun GenreMixSlide(
         }
     }
 }
-
+*/
 private fun shuffleNoConsecutiveAlbums(songs: List<MediaItem>): List<MediaItem> {
     if (songs.size <= 1) return songs
 
@@ -1090,4 +1086,67 @@ private fun shuffleNoConsecutiveAlbums(songs: List<MediaItem>): List<MediaItem> 
         i++
     }
     return shuffled
+}
+@Composable
+private fun GridActionTile(
+    modifier: Modifier = Modifier,
+    label: String,
+    subtitle: String? = null,
+    iconRes: Int,
+    filled: Boolean,
+    isLoading: Boolean,
+    enabled: Boolean,
+    accent: Color,
+    surfaceCol: Color,
+    onClick: () -> Unit
+) {
+    val bg = if (filled) accent else surfaceCol
+    val fg = if (filled) surfaceCol else accent
+
+    Box(
+        modifier = modifier
+            .background(bg)
+            //.border(1.dp, accent)
+            .clickable(enabled = enabled) { onClick() }
+            .padding(8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(28.dp),
+                color = fg,
+                strokeWidth = 3.dp
+            )
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(iconRes),
+                    contentDescription = null,
+                    tint = fg,
+                    modifier = Modifier.size(26.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = fg,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = fg.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
 }

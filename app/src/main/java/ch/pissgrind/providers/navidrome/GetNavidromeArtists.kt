@@ -50,7 +50,7 @@ fun parseNavidromeArtistAlbumsJSON(
     val passwordHashArt = NavidromeDataSource.md5Hash(navidromePassword + passwordSaltArt)
 
     subsonicResponse.artist?.album?.forEach {
-        it.coverArt = "$navidromeUrl/rest/getCoverArt.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHashArt&s=$passwordSaltArt&v=1.16.1&c=Chora"
+        it.coverArt = "$navidromeUrl/rest/getCoverArt.view?&id=${it.navidromeID}&u=$navidromeUsername&t=$passwordHashArt&s=$passwordSaltArt&v=1.16.1&c=pissgrind"
     }
 
     return subsonicResponse.artist?.album?.map { it.toMediaItem() } ?: emptyList()

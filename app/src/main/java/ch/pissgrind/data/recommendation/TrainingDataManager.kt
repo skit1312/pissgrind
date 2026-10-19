@@ -342,7 +342,7 @@ class TrainingDataManager @Inject constructor(
     }
     /**
      * Wipes the server-side training data by overwriting it with an empty store.
-     * Bypasses the sync debounce — used by the "Wipe Algorithm" action.
+     * Bypasses the sync debounce used by the "Wipe Algorithm" action.
      */
     suspend fun wipeServerData() = withContext(Dispatchers.IO) {
         val server = NavidromeManager.getCurrentServer() ?: return@withContext

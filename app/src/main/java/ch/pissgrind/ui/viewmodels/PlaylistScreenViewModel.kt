@@ -158,4 +158,19 @@ class PlaylistScreenViewModel @Inject constructor(
             fetchPlaylistDetails()
         }
     }
+    // ===== Für den Add-to-Playlist-Dialog (warten auf den Server) =====
+
+    /** Song-IDs einer Playlist in Reihenfolge (Index 0 = oberster Eintrag). */
+    suspend fun getPlaylistSongIds(playlistId: String): List<String> =
+        playlistRepository.getPlaylistSongs(playlistId, true)
+            .map { it.mediaMetadata.extras?.getString("navidromeID") ?: it.mediaId }
+
+    suspend fun addSongToPlaylistAwait(playlistId: String, songId: String) {
+        playlistRepository.addSongToPlaylist(playlistId, songId)
+    }
+
+    suspend fun removeSongFromPlaylistAwait(playlistId: String, songIndex: Int, songId: String) {
+        playlistRepository.removeSongFromPlaylist(playlistId, songIndex, songId)
+        fetchPlaylistDetails()   // falls die Playlist gerade in PlaylistDetails offen ist
+    }
 }

@@ -6,7 +6,7 @@ import ch.pissgrind.managers.NavidromeManager
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class ChoraApplication : Application(){
+class PissgrindApplication : Application(){
     override fun onCreate() {
         super.onCreate()
         NavidromeManager.init(this)

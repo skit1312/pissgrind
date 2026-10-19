@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 fun TrainingButtons(
     isVisible: Boolean,
     currentSongId: String = "",
+    currentRating: Boolean? = null,
     color: Color = Color.White,
     onThumbsUp: () -> Unit,
     onThumbsDown: () -> Unit,
@@ -57,10 +58,9 @@ fun TrainingButtons(
     var thumbsUpPressed by remember { mutableStateOf(false) }
     var thumbsDownPressed by remember { mutableStateOf(false) }
 
-    // Reset when song changes
-    LaunchedEffect(currentSongId) {
-        thumbsUpPressed = false
-        thumbsDownPressed = false
+    LaunchedEffect(currentSongId, currentRating) {
+        thumbsUpPressed = currentRating == true
+        thumbsDownPressed = currentRating == false
     }
 
     val thumbsUpColor by animateColorAsState(
@@ -109,8 +109,8 @@ fun TrainingButtons(
 
             // Training label
             Text(
-                text = "TRAINING",
-                style = MaterialTheme.typography.labelSmall,
+                text = "   //   ",
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = color.copy(alpha = 0.5f)
             )
@@ -138,18 +138,6 @@ fun TrainingButtons(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Stop Training
- //           IconButton(
- //               onClick = onStopTraining,
- //               modifier = Modifier.size(36.dp)
- //           ) {
- //               Icon(
- //                   imageVector = FeatherIcons.X,
- //                   contentDescription = "Stop Training",
- //                   tint = color.copy(alpha = 0.4f),
- //                   modifier = Modifier.size(16.dp)
- //               )
             }
         }
     }
-//}

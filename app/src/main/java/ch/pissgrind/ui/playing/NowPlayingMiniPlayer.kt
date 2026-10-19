@@ -3,11 +3,9 @@ package ch.pissgrind.ui.playing
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -48,18 +46,15 @@ import ch.pissgrind.ui.theme.PissBlack
 import ch.pissgrind.ui.theme.PissGreen
 import androidx.media3.session.MediaController
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.rememberCoroutineScope
-import ch.pissgrind.player.ChoraMediaLibraryService
+import ch.pissgrind.player.PissgrindMediaLibraryService
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
 import ch.pissgrind.ui.theme.LocalIsDark
 import ch.pissgrind.ui.theme.LocalLightBackground
-import ch.pissgrind.ui.theme.PissWhite
 import kotlinx.coroutines.delay
 
 
@@ -87,7 +82,7 @@ fun NowPlayingMiniPlayer(
 
     LaunchedEffect(Unit) {
         while (true) {
-            val player = ChoraMediaLibraryService.getInstance()?.player
+            val player = PissgrindMediaLibraryService.getInstance()?.player
             val duration = player?.duration ?: 0L
             val position = player?.currentPosition ?: 0L
             progress = if (duration > 0) position.toFloat() / duration.toFloat() else 0f
@@ -175,7 +170,7 @@ fun NowPlayingMiniPlayer(
                 }
             }
 
-            ChoraMediaLibraryService.getInstance()?.player?.let {
+            PissgrindMediaLibraryService.getInstance()?.player?.let {
                 PlayPauseButton(
                     it,
                     if (isDark) PissGreen else PissBlack,

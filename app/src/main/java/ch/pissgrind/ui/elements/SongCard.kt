@@ -68,6 +68,7 @@ fun HorizontalSongCard(
     song: MediaItem,
     modifier: Modifier = Modifier,
     showTrackNumber: Boolean = false,
+    coverArtSize: Int = 128,
     onClick: () -> Unit,
     onAddToQueue: () -> Unit,
     onPlayNext: () -> Unit,
@@ -202,12 +203,15 @@ fun HorizontalSongCard(
                     } else {
                         SubcomposeAsyncImage(
                             model = ImageRequest.Builder(context)
-                                .data(song.mediaMetadata.artworkUri)
+                                .data(
+                                    song.mediaMetadata.artworkUri?.toString()
+                                        ?.replace("size=128", "size=$coverArtSize")
+                                )
                                 .crossfade(true)
-                                .size(64)
+                                .size(coverArtSize)
                                 .diskCacheKey(
-                                    song.mediaMetadata.extras?.getString("navidromeID")
-                                        ?: song.mediaId
+                                    (song.mediaMetadata.extras?.getString("navidromeID")
+                                        ?: song.mediaId) + "_$coverArtSize"
                                 )
                                 .build(),
                             contentDescription = "Album Image",
@@ -269,6 +273,11 @@ fun HorizontalSongCard(
                             text = { Text("Play Next") },
                             onClick = {
                                 onPlayNext()
+                                Toast.makeText(
+                                    context,
+                                    "${song.mediaMetadata.title} plays next",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 expanded = false
                             },
                             leadingIcon = {

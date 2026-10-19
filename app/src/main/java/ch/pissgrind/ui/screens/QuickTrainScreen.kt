@@ -256,7 +256,7 @@ fun QuickTrainScreen(
                     // Cover Art Card
                     metadata?.artworkUri?.let { uri ->
                         AsyncImage(
-                            model = uri.toString().replace("size=128", "size=600"),
+                            model = uri.toString().replace("size=128", "size=500"),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier

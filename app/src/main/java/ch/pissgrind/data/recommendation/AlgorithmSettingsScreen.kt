@@ -26,8 +26,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -71,7 +69,6 @@ fun AlgorithmSettingsScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val isPersistentTraining by TrainingModeManager.isPersistentTraining.collectAsStateWithLifecycle()
     val isDark = LocalIsDark.current
 
     // Theme colors
@@ -154,49 +151,11 @@ fun AlgorithmSettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "When enabled, thumbs up/down buttons appear on the Now Playing screen during normal playback. The 'Train' button on the home screen always shows feedback buttons regardless of this setting.",
+                    text = "Tap the 'Training' chip on the Now Playing Screen to show Thumbs Up/Down Buttons during normal Playback.",
                     style = MaterialTheme.typography.bodySmall,
                     color = subtleColor
                 )
             }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Always-On Training",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = textColor
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Show Feedback Buttons during all Playback",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = subtleColor
-                        )
-                    }
-                    Switch(
-                        checked = isPersistentTraining,
-                        onCheckedChange = { enabled ->
-                            TrainingModeManager.savePersistentTraining(context, enabled)
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = if (isDark) PissBlack else PissWhite,
-                            checkedTrackColor = if (isDark) PissGreen else PissBlack,
-                            uncheckedThumbColor = subtleColor,
-                            uncheckedTrackColor = if (isDark) PissBlack else PissWhite
-                        )
-                    )
-                }
-            }
-
             item {
                 HorizontalDivider(color = dividerColor)
             }
@@ -327,13 +286,21 @@ fun AlgorithmSettingsScreen(
                                         algorithmLogger.clearLog()
                                         recommendationCache.clear()
                                         excludedAlbumsManager.clearAll()
-                                        val prefs = context.getSharedPreferences("pissgrind_recommendations", android.content.Context.MODE_PRIVATE)
+                                        val prefs = context.getSharedPreferences(
+                                            "pissgrind_recommendations",
+                                            android.content.Context.MODE_PRIVATE
+                                        )
                                         prefs.edit().clear().apply()
 
-                                        Toast.makeText(context, "Algorithm Wiped. Restarting...", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Algorithm Wiped. Restarting...",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
 
                                         kotlinx.coroutines.delay(500)
-                                        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                                        val intent =
+                                            context.packageManager.getLaunchIntentForPackage(context.packageName)
                                         intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                                         context.startActivity(intent)
                                         (context as? android.app.Activity)?.finish()
@@ -358,7 +325,11 @@ fun AlgorithmSettingsScreen(
                                     contentColor = outlinedButtonContent
                                 ),
                                 shape = RoundedCornerShape(2.dp),
-                                modifier = Modifier.border(1.dp, borderColor, RoundedCornerShape(2.dp))
+                                modifier = Modifier.border(
+                                    1.dp,
+                                    borderColor,
+                                    RoundedCornerShape(2.dp)
+                                )
                             ) {
                                 Text("Cancel")
                             }
@@ -366,8 +337,11 @@ fun AlgorithmSettingsScreen(
                     )
                 }
             }
+        }
+    }
+}       //remove last three } if uncommenting stats section
 
-            // ===== STATS =====
+        /*    // ===== STATS =====
             item {
                 Text(
                     text = "Stats",
@@ -466,3 +440,4 @@ private fun StatRow(label: String, value: String, textColor: Color, subtleColor:
         )
     }
 }
+*/
