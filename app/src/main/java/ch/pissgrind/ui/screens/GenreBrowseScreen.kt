@@ -34,6 +34,21 @@ import androidx.compose.material.icons.Icons
 import java.net.URLEncoder
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import ch.pissgrind.ui.theme.LocalLightBackground
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun GenreBrowseScreen(
@@ -89,73 +104,69 @@ fun GenreBrowseScreen(
             )
         }
 
+        var expandedCategory by remember { mutableStateOf(viewModel.initialCategory) }
 
-        // Category Chips
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
+        // ===== Maingenres ====
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            genresByCategory.keys.forEach { category ->
-                FilterChip(
+            items(genresByCategory.keys.toList(), key = { "cat_$it" }) { category ->
+                CategoryChip(
+                    label = category,
                     selected = selectedCategory == category,
-                    onClick = { viewModel.selectCategory(category) },
-                    label = { Text(category, maxLines = 1) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = chipSelectedBg,
-                        selectedLabelColor = chipSelectedText,
-                        containerColor = chipBg,
-                        labelColor = chipText
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = chipBorder,
-                        selectedBorderColor = chipSelectedBg,
-                        enabled = true,
-                        selected = selectedCategory == category
-                    ),
-                    shape = RoundedCornerShape(2.dp)
+                    expanded = expandedCategory == category,
+                    hasSubgenres = !genresByCategory[category].isNullOrEmpty(),
+                    accent = chipSelectedBg,
+                    surfaceCol = chipBg,
+                    borderColor = chipBorder,
+                    onSelect = { viewModel.selectCategory(category) },
+                    onToggleExpand = {
+                        expandedCategory = if (expandedCategory == category) null else category
+                        if (expandedCategory == category) viewModel.selectCategory(category)
+                    }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        // ==== Subgenres ====
+        val genresInCategory = genresByCategory[expandedCategory] ?: emptyList()
 
-        // Genre Chips within selected Category
-        val genresInCategory = genresByCategory[selectedCategory] ?: emptyList()
-
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+        AnimatedVisibility(
+            visible = expandedCategory != null && genresInCategory.isNotEmpty(),
+            enter = expandVertically(tween(250, easing = FastOutSlowInEasing)) + fadeIn(tween(250)),
+            exit = shrinkVertically(tween(200, easing = FastOutSlowInEasing)) + fadeOut(tween(150))
         ) {
-            genresInCategory.forEach { genre ->
-                FilterChip(
-                    selected = selectedGenre == genre,
-                    onClick = { viewModel.selectGenre(genre) },
-                    label = {
-                        Text(
-                            genre,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = chipSelectedBg,
-                        selectedLabelColor = chipSelectedText,
-                        containerColor = chipBg,
-                        labelColor = chipText
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = chipBorder.copy(alpha = 1f),
-                        selectedBorderColor = chipSelectedBg,
-                        enabled = true,
-                        selected = selectedGenre == genre
-                    ),
-                    shape = RoundedCornerShape(2.dp)
-                )
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 12.dp, top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                genresInCategory.forEach { genre ->
+                    FilterChip(
+                        selected = selectedGenre == genre,
+                        onClick = { viewModel.selectGenre(genre) },
+                        label = {
+                            Text(genre, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = chipSelectedBg,
+                            selectedLabelColor = chipSelectedText,
+                            containerColor = chipBg,
+                            labelColor = chipText
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = chipBorder.copy(alpha = 1f),
+                            selectedBorderColor = chipSelectedBg,
+                            enabled = true,
+                            selected = selectedGenre == genre
+                        ),
+                        shape = RoundedCornerShape(2.dp)
+                    )
+                }
             }
         }
 
@@ -268,5 +279,68 @@ private fun GenreAlbumCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+@Composable
+private fun CategoryChip(
+    label: String,
+    selected: Boolean,
+    expanded: Boolean,
+    hasSubgenres: Boolean,
+    accent: Color,
+    surfaceCol: Color,
+    borderColor: Color,
+    onSelect: () -> Unit,
+    onToggleExpand: () -> Unit
+) {
+    val bg by animateColorAsState(if (selected) accent else surfaceCol, tween(200), label = "chip bg")
+    val fg by animateColorAsState(if (selected) surfaceCol else accent, tween(200), label = "chip fg")
+    val rotation by animateFloatAsState(if (expanded) 180f else 0f, tween(250), label = "chevron")
+
+    Row(
+        modifier = Modifier
+            .height(32.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(bg)
+            .border(1.dp, if (selected) accent else borderColor, RoundedCornerShape(2.dp)),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Name: auswählen
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .clickable { onSelect() }
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                color = fg,
+                maxLines = 1
+            )
+        }
+
+        // Chevron: auf-/zuklappen
+        if (hasSubgenres) {
+            Box(Modifier.width(1.dp).fillMaxHeight().background(fg.copy(alpha = 0.4f)))
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .clickable { onToggleExpand() }
+                    .padding(horizontal = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = fg,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .graphicsLayer { rotationZ = rotation }
+                )
+            }
+        }
     }
 }

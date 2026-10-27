@@ -356,10 +356,16 @@ fun SetupNavGraph(
                 RequestScreen()
             }
 
-            composable(route = Screen.GenreBrowse.route) {
+            composable(
+                route = Screen.GenreBrowse.route + "?category={category}",
+                arguments = listOf(navArgument("category") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) {
                 GenreBrowseScreen(navHostController = navController)
             }
-
 
             // ===== COLLECTION / LIBRARY =====
             composable(route = Screen.Collection.route) { backStackEntry ->

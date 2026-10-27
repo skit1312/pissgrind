@@ -1,5 +1,6 @@
 package ch.pissgrind.ui.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ch.pissgrind.data.recommendation.AlbumGenreData
@@ -17,13 +18,16 @@ import javax.inject.Inject
 @HiltViewModel
 class GenreBrowseViewModel @Inject constructor(
     private val genreRepository: GenreRepository,
-    private val recommendationRepository: RecommendationRepository
+    private val recommendationRepository: RecommendationRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    val initialCategory: String? = savedStateHandle.get<String>("category")
     private val _genresByCategory = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     val genresByCategory: StateFlow<Map<String, List<String>>> = _genresByCategory.asStateFlow()
 
-    private val _selectedCategory = MutableStateFlow("Metal")
+    private val _selectedCategory = MutableStateFlow(initialCategory ?: "Grind")
+
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
     private val _selectedGenre = MutableStateFlow<String?>(null)
@@ -66,6 +70,17 @@ class GenreBrowseViewModel @Inject constructor(
 
                 // Filter genresByCategory to only show genres with albums
                 val fullCategories = genreRepository.getGenresByCategory()
+                val unknownRaw = allAlbums
+                    .flatMap { it.genres }
+                    .filter { genreRepository.normalize(it) == null }
+                    .groupingBy { it.trim().lowercase() }
+                    .eachCount()
+                    .entries.sortedByDescending { it.value }
+                android.util.Log.d(
+                    "GenreBrowse",
+                    "Unknown Tags (${unknownRaw.size}): " +
+                            unknownRaw.joinToString { "${it.key} (${it.value})" }
+                )
                 val filteredCategories = fullCategories.mapValues { (_, genres) ->
                     genres.filter { it in availableGenres }
                 }.filter { it.value.isNotEmpty() }

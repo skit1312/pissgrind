@@ -1,5 +1,8 @@
 package ch.pissgrind.ui.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import ch.pissgrind.ui.theme.LocalIsDark
@@ -41,7 +44,12 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.unit.sp
 import ch.pissgrind.ui.theme.LocalLightBackground
+import java.util.Locale
+import androidx.compose.foundation.lazy.LazyRow
+import ch.pissgrind.ui.viewmodels.LibraryStats
+
 
 enum class LibraryTab { ALL, ALBUMS, ARTISTS, SONGS }
 
@@ -53,6 +61,9 @@ fun LibraryScreen(
     viewModel: LibraryScreenViewModel = hiltViewModel(),
     artistsViewModel: ArtistsScreenViewModel? = null
 ) {
+    val libraryStats by viewModel.libraryStats.collectAsStateWithLifecycle()
+    val availableCategories by viewModel.availableCategories.collectAsStateWithLifecycle()
+    val discoverAlbums by viewModel.discoverAlbums.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val isDark = LocalIsDark.current
@@ -189,10 +200,10 @@ fun LibraryScreen(
                     // ===== DISCOVER MODE =====
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 8.dp)
+                        contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        // Action Buttons (Browse Genres + Recently Added)
-                        item {
+                        // Action Tiles (unverändert)
+                        item(key = "tiles") {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -206,9 +217,7 @@ fun LibraryScreen(
                                     borderColor = borderColor,
                                     modifier = Modifier.weight(1f),
                                     onClick = {
-                                        navHostController.navigate(Screen.GenreBrowse.route) {
-                                            launchSingleTop = true
-                                        }
+                                        navHostController.navigate(Screen.GenreBrowse.route) { launchSingleTop = true }
                                     }
                                 )
                                 ActionTile(
@@ -218,17 +227,41 @@ fun LibraryScreen(
                                     borderColor = borderColor,
                                     modifier = Modifier.weight(1f),
                                     onClick = {
-                                        navHostController.navigate(Screen.HomeLists.route + "/recently_added") {
-                                            launchSingleTop = true
-                                        }
+                                        navHostController.navigate(Screen.HomeLists.route + "/recently_added") { launchSingleTop = true }
                                     }
                                 )
                             }
                         }
 
-                        // Recent Searches when search bar is focused
-                        if (recentSearches.isNotEmpty() && isSearchBarFocused) {
-                            item { SectionHeader("Recent Searches", textColor) }
+                        // ======= Genres ======
+                        if (availableCategories.isNotEmpty()) {
+                            item(key = "genres_header") { DiscoverHeader("Genres", textColor) }
+                            item(key = "genres_row") {
+                                LazyRow(
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    items(availableCategories, key = { "gc_${it.first}" }) { (category, count) ->
+                                        GenreJumpChip(category, count, textColor, borderColor) {
+                                            navHostController.navigate(Screen.GenreBrowse.withCategory(category)) {
+                                                launchSingleTop = true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ===== Recent Searches =======
+                        if (recentSearches.isNotEmpty()) {
+                            item(key = "recent_header") {
+                                DiscoverHeader(
+                                    title = "Recent Searches",
+                                    textColor = textColor,
+                                    actionLabel = "Clear All",
+                                    onAction = { viewModel.clearRecentSearches() }
+                                )
+                            }
                             items(recentSearches, key = { "recent_$it" }) { search ->
                                 RecentSearchItem(
                                     query = search,
@@ -242,8 +275,42 @@ fun LibraryScreen(
                                 )
                             }
                         }
+
+                        // ===== Rediscover ======
+                        if (discoverAlbums.isNotEmpty()) {
+                            item(key = "rediscover_header") {
+                                DiscoverHeader(
+                                    title = "Rediscover",
+                                    textColor = textColor,
+                                    actionIcon = R.drawable.arrow_counter_clockwise_light,
+                                    onAction = { viewModel.shuffleDiscover() }
+                                )
+                            }
+                            items(discoverAlbums.chunked(3)) { row ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    row.forEach { album ->
+                                        RediscoverCard(
+                                            album = album,
+                                            context = context,
+                                            navHostController = navHostController,
+                                            textColor = textColor,
+                                            borderColor = borderColor,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                                }
+                            }
+                        }
+                        item(key = "stats") { LibraryStatsBar(libraryStats, textColor) }
                     }
                 } else {
+
                     // ===== SEARCH MODE =====
                     LaunchedEffect(queryText) {
                         if (queryText.length >= 3) {
@@ -472,3 +539,177 @@ private fun SongListItem(song: MediaItem, allSongs: List<MediaItem>, mediaContro
         }
     }
 }
+@Composable
+private fun DiscoverHeader(
+    title: String,
+    textColor: Color,
+    actionLabel: String? = null,
+    actionIcon: Int? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 8.dp, top = 20.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp,
+            color = textColor,
+            modifier = Modifier.weight(1f)
+        )
+        if (onAction != null) {
+            if (actionIcon != null) {
+                IconButton(onClick = onAction, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(actionIcon),
+                        contentDescription = title,
+                        tint = textColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            } else if (actionLabel != null) {
+                Text(
+                    text = actionLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = textColor.copy(alpha = 0.7f),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(2.dp))
+                        .clickable { onAction() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GenreJumpChip(
+    label: String,
+    count: Int,
+    textColor: Color,
+    borderColor: Color,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .height(36.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .border(1.dp, borderColor, RoundedCornerShape(2.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = textColor,
+            maxLines = 1
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor.copy(alpha = 0.6f)
+        )
+    }
+}
+
+@Composable
+private fun RediscoverCard(
+    album: MediaItem,
+    context: android.content.Context,
+    navHostController: NavHostController,
+    textColor: Color,
+    borderColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val meta = album.mediaMetadata
+    Column(
+        modifier = modifier.clickable {
+            val navidromeID = meta.extras?.getString("navidromeID") ?: ""
+            val coverArt = meta.artworkUri?.toString()?.replace("size=128", "size=300") ?: ""
+            val encodedImage = URLEncoder.encode(coverArt, "UTF-8")
+            navHostController.navigate(Screen.AlbumDetails.route + "/$navidromeID/$encodedImage") {
+                launchSingleTop = true
+            }
+        }
+    ) {
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(meta.artworkUri)
+                .crossfade(true)
+                .build(),
+            contentDescription = "Album Cover",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(2.dp))
+                .border(1.dp, borderColor, RoundedCornerShape(2.dp))
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = meta.albumTitle?.toString() ?: "",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = meta.artist?.toString() ?: "",
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor.copy(alpha = 0.8f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun LibraryStatsBar(stats: LibraryStats?, textColor: Color) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 28.dp)
+    ) {
+        HorizontalDivider(thickness = 1.dp, color = textColor)
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
+            StatCell(stats?.albums, "Albums", textColor, Modifier.weight(1f))
+            StatCell(stats?.artists, "Artists", textColor, Modifier.weight(1f))
+            StatCell(stats?.songs, "Songs", textColor, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StatCell(value: Int?, label: String, textColor: Color, modifier: Modifier = Modifier) {
+    val animated by animateIntAsState(
+        targetValue = value ?: 0,
+        animationSpec = tween(900, easing = FastOutSlowInEasing),
+        label = "stat_$label"
+    )
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = if (value == null) "—" else formatCount(animated),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            letterSpacing = 2.sp,
+            color = textColor.copy(alpha = 0.7f)
+        )
+    }
+}
+
+/** 18934 -> 18'934 */
+private fun formatCount(n: Int): String =
+    String.format(Locale.US, "%,d", n).replace(",", "'")

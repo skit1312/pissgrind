@@ -6,8 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import ch.pissgrind.data.model.MediaData
+import ch.pissgrind.data.recommendation.RecommendationRepository
+import ch.pissgrind.data.recommendation.ScoredAlbum
 import ch.pissgrind.data.repository.AlbumRepository
 import ch.pissgrind.data.repository.ArtistRepository
+import ch.pissgrind.data.repository.GenreRepository
 import ch.pissgrind.data.repository.SongRepository
 import ch.pissgrind.managers.NavidromeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,12 +22,16 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class LibraryStats(val albums: Int, val artists: Int, val songs: Int)
+
 @HiltViewModel
 class LibraryScreenViewModel @Inject constructor(
     private val application: Application,
     private val albumRepository: AlbumRepository,
     private val artistRepository: ArtistRepository,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val recommendationRepository: RecommendationRepository,
+    private val genreRepository: GenreRepository
 ) : ViewModel() {
 
     // Full cached data (loaded once)
@@ -65,6 +72,11 @@ class LibraryScreenViewModel @Inject constructor(
     private val _artistCoverMap = MutableStateFlow<Map<String, String>>(emptyMap())
     val artistCoverMap: StateFlow<Map<String, String>> = _artistCoverMap.asStateFlow()
 
+    private val _libraryStats = MutableStateFlow<LibraryStats?>(null)
+    val libraryStats: StateFlow<LibraryStats?> = _libraryStats.asStateFlow()
+    private val _availableCategories = MutableStateFlow<List<Pair<String, Int>>>(emptyList())
+    val availableCategories: StateFlow<List<Pair<String, Int>>> = _availableCategories.asStateFlow()
+
     // Track if Data was already loaded
     private var dataLoaded = false
 
@@ -72,6 +84,7 @@ class LibraryScreenViewModel @Inject constructor(
         loadAllIfNeeded()
         observeServerChanges()
     }
+
     private fun observeServerChanges() {
         viewModelScope.launch {
             NavidromeManager.allServers
@@ -83,6 +96,7 @@ class LibraryScreenViewModel @Inject constructor(
                 }
         }
     }
+
     /**
      * Only loads data once. Subsequent calls are no-ops.
      */
@@ -171,14 +185,17 @@ class LibraryScreenViewModel @Inject constructor(
         _artistCoverMap.value = coverMap
 
         // Set discover picks (random 8)
-        _discoverAlbums.value = albums.shuffled().take(4)
+        _discoverAlbums.value = albums.shuffled().take(6)
         _discoverArtists.value = artists.shuffled().take(4)
         _discoverSongs.value = songs.shuffled().take(12)
+        _libraryStats.value = LibraryStats(albums.size, artists.size, songs.size)
 
         // Reset filtered to full lists
         _filteredAlbums.value = albums
         _filteredArtists.value = artists
         _filteredSongs.value = songs
+
+        viewModelScope.launch { loadGenreCounts() }
     }
 
     fun search(query: String) {
@@ -244,5 +261,30 @@ class LibraryScreenViewModel @Inject constructor(
 
     private fun saveRecentSearches(searches: List<String>) {
         prefs.edit().putString("recent_searches", searches.joinToString("||")).commit()
+    }
+
+    fun shuffleDiscover() {
+        _discoverAlbums.value = _allAlbums.value.shuffled().take(6)
+    }
+
+    fun clearRecentSearches() {
+        _recentSearches.value = emptyList()
+        saveRecentSearches(emptyList())
+    }
+
+    private suspend fun loadGenreCounts() {
+        val albums = try {
+            recommendationRepository.getAllAlbumsWithGenres()
+        } catch (e: Exception) {
+            emptyList()
+        }
+        if (albums.isEmpty()) return
+
+        val normalized = albums.map { genreRepository.normalizeAll(it.genres).toSet() }
+        _availableCategories.value = genreRepository.getGenresByCategory()
+            .mapNotNull { (category, genres) ->
+                val count = normalized.count { albumGenres -> genres.any { it in albumGenres } }
+                if (count > 0) category to count else null
+            }
     }
 }

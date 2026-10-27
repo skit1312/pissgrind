@@ -28,5 +28,8 @@ sealed class Screen(val route: String) {
     object Collection : Screen("collection_screen")
     object Recommendations : Screen("recommendations_screen")
     object S_Algorithm : Screen("s_algorithm_screen")
-    object GenreBrowse : Screen("genre_browse")
+    object GenreBrowse : Screen("genre_browse") {
+        fun withCategory(category: String) =
+            "$route?category=${android.net.Uri.encode(category)}"
+    }
 }
