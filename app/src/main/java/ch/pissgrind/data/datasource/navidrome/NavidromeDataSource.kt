@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.media3.common.MediaItem
 import ch.pissgrind.data.NavidromeLibrary
 import ch.pissgrind.data.model.MediaData
-import ch.pissgrind.data.model.Playlist
 import ch.pissgrind.managers.NavidromeManager
 import ch.pissgrind.providers.navidrome.navidromeStatus
 import ch.pissgrind.providers.navidrome.parseNavidromeAlbumJSON
@@ -17,7 +16,6 @@ import ch.pissgrind.providers.navidrome.parseNavidromeFavouritesJSON
 import ch.pissgrind.providers.navidrome.parseNavidromeLibrariesJSON
 import ch.pissgrind.providers.navidrome.parseNavidromePlaylistJSON
 import ch.pissgrind.providers.navidrome.parseNavidromePlaylistsJSON
-import ch.pissgrind.providers.navidrome.parseNavidromeRadioJSON
 import ch.pissgrind.providers.navidrome.parseNavidromeSearch3JSON
 import ch.pissgrind.providers.navidrome.parseNavidromeSimilarSongsJSON
 import ch.pissgrind.providers.navidrome.parseNavidromeStatus
@@ -48,6 +46,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import ch.pissgrind.BuildConfig
 
 @Singleton
 class NavidromeDataSource @Inject constructor() {
@@ -60,7 +59,7 @@ class NavidromeDataSource @Inject constructor() {
             }
             install(HttpCache)
             install(Logging) {
-                level = LogLevel.ALL
+                level = if (BuildConfig.DEBUG) LogLevel.ALL else LogLevel.NONE
                 logger = Logger.SIMPLE
             }
         }
@@ -73,7 +72,10 @@ class NavidromeDataSource @Inject constructor() {
             val md = MessageDigest.getInstance("MD5")
             val hashBytes = md.digest(input.toByteArray())
             return hashBytes.joinToString("") { "%02x".format(it) }
+
         }
+        fun sanitizeUrl(url: String): String =
+            url.replace(Regex("""([?&])(u|t|s|p)=[^&]*"""), "$1$2=***")
 
         fun generateSalt(length: Int): String {
             val allowedChars = ('a'..'z') + ('A'..'Z') + ('0'..'9')
@@ -110,7 +112,7 @@ class NavidromeDataSource @Inject constructor() {
             }
             install(HttpCache)
             install(Logging) {
-                level = LogLevel.ALL
+                level = if (BuildConfig.DEBUG) LogLevel.ALL else LogLevel.NONE
                 logger = Logger.SIMPLE
             }
         }
@@ -152,7 +154,7 @@ class NavidromeDataSource @Inject constructor() {
             }
 
             if (response.status != HttpStatusCode.OK) {
-                Log.w("NAVIDROME", "HTTP ${response.status} for URL: $url")
+                Log.w("NAVIDROME", "HTTP ${response.status} for URL: ${sanitizeUrl(url)}")
                 return@withContext emptyList()
             }
             val responseContent = response.bodyAsText()
@@ -265,18 +267,18 @@ class NavidromeDataSource @Inject constructor() {
                 )
             }
         } catch (e: UnresolvedAddressException) {
-            Log.e("NAVIDROME", "Network error for URL: $url", e)
+            Log.e("NAVIDROME", "Network error for URL: ${sanitizeUrl(url)}", e)
             navidromeStatus.value = "Unknown host"
         } catch (e: ConnectException) {
-            Log.e("NAVIDROME", "Network error for URL: $url", e)
+            Log.e("NAVIDROME", "Network error for URL: ${sanitizeUrl(url)}", e)
             navidromeStatus.value = e.message.toString()
         } catch (e: Exception) {
-            Log.e("NAVIDROME", "Network error for URL: $url", e)
+            Log.e("NAVIDROME", "Network error for URL: ${sanitizeUrl(url)}", e)
             navidromeStatus.value = e.message.toString()
-        } finally {
+        }
+        finally {
             NavidromeManager.setSyncingStatus(false)
         }
-
         parsedData
     }
 

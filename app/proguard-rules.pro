@@ -23,6 +23,14 @@
 -dontwarn javax.xml.stream.XMLInputFactory
 -dontwarn javax.xml.stream.XMLStreamReader
 
+#noinspection ShrinkerUnresolvedReference
 -keepclassmembers class * extends androidx.datastore.preferences.protobuf.GeneratedMessageLite {
     <fields>;
+}
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** i(...);
+    public static *** w(...);
+    public static *** e(...);
 }

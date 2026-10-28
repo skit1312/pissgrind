@@ -67,6 +67,11 @@ import ch.pissgrind.data.repository.CollectionRepository
 import ch.pissgrind.ui.theme.LocalIsDark
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.ui.draw.drawBehind
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 @Stable
 @Serializable
@@ -301,13 +306,13 @@ fun HomeScreen(
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.Center
                         ) {
-                            repeat(minOf(pagerState.pageCount, 15)) { index ->
+                            repeat(minOf(pagerState.pageCount, 20)) { index ->
                                 Box(
                                     modifier = Modifier
                                         .padding(horizontal = 2.dp)
-                                        .size(if (pagerState.currentPage % 15 == index) 8.dp else 4.dp)
+                                        .size(if (pagerState.currentPage % 20 == index) 8.dp else 4.dp)
                                         .background(
-                                            if (pagerState.currentPage % 15 == index)
+                                            if (pagerState.currentPage % 20 == index)
                                                 if (isDark) PissGreen else PissBlack
                                             else
                                                 (if (isDark) PissGreen else PissBlack).copy(alpha = 0.5f),
@@ -354,14 +359,28 @@ fun HomeScreen(
                         ) {
                             runAction("mymix") {
                                 TrainingModeManager.stopTrainingPlaylist()
-                                val albumIds = viewModel.getMyMixAlbumIds()
-                                val songs = mutableListOf<MediaItem>()
-                                albumIds.take(10).forEach { id ->
-                                    songs.addAll(viewModel.getAlbumSongs(id).drop(1))
+                                val albumIds = viewModel.getMyMixAlbumIds().take(50)
+
+                                // Parallel laden, max. 5 gleichzeitig (wie im Repository)
+                                val semaphore = Semaphore(5)
+                                val songs = coroutineScope {
+                                    albumIds.map { id ->
+                                        async {
+                                            semaphore.withPermit {
+                                                runCatching { viewModel.getAlbumSongs(id) }
+                                                    .getOrDefault(emptyList())
+                                                    .shuffled()
+                                                    .take(3)        // max. 3 Songs pro Album
+                                            }
+                                        }
+                                    }.awaitAll().flatten()
                                 }
+
                                 if (songs.isNotEmpty()) {
                                     SongHelper.play(
-                                        shuffleNoConsecutiveAlbums(songs), 0, mediaController
+                                        shuffleNoConsecutiveAlbums(songs).take(150),
+                                        0,
+                                        mediaController
                                     )
                                 }
                             }
@@ -384,7 +403,11 @@ fun HomeScreen(
                                     TrainingModeManager.stopTrainingPlaylist()
                                     val songs = viewModel.getAllSongsShuffled()
                                     if (songs.isNotEmpty()) {
-                                        SongHelper.play(songs, 0, mediaController)
+                                        SongHelper.play(
+                                            shuffleNoConsecutiveAlbums(songs),
+                                            0,
+                                            mediaController
+                                        )
                                     }
                                 }
                             }
@@ -690,7 +713,7 @@ private fun MyMixTile(
                     else
                         "Play some music to\nbuild your Mix",
                     style = MaterialTheme.typography.bodySmall,
-                    color = fg.copy(alpha = 0.85f)
+                    color = fg.copy(alpha = 0.8f)
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -1060,33 +1083,34 @@ private fun GenreMixSlide(
     }
 }
 */
+
 private fun shuffleNoConsecutiveAlbums(songs: List<MediaItem>): List<MediaItem> {
-    if (songs.size <= 1) return songs
+    if (songs.size <= 2) return songs.shuffled()
 
-    val shuffled = songs.shuffled().toMutableList()
-    val maxAttempts = shuffled.size * 3
-    var attempts = 0
+    val buckets = songs
+        .groupBy { it.mediaMetadata.albumTitle?.toString() ?: it.mediaId }
+        .mapValues { it.value.shuffled().toMutableList() }
+        .toMutableMap()
 
-    var i = 1
-    while (i < shuffled.size && attempts < maxAttempts) {
-        val prevAlbum = shuffled[i - 1].mediaMetadata.albumTitle?.toString()
-        val currentAlbum = shuffled[i].mediaMetadata.albumTitle?.toString()
+    val result = ArrayList<MediaItem>(songs.size)
+    var lastKey: String? = null
 
-        if (prevAlbum != null && prevAlbum == currentAlbum) {
-            val swapIndex = (i + 1 until shuffled.size).firstOrNull { j ->
-                shuffled[j].mediaMetadata.albumTitle?.toString() != prevAlbum
-            }
-            if (swapIndex != null) {
-                val temp = shuffled[i]
-                shuffled[i] = shuffled[swapIndex]
-                shuffled[swapIndex] = temp
-            }
-            attempts++
-        }
-        i++
+    while (buckets.isNotEmpty()) {
+        // Alle Alben ausser dem letzten; wenn nur noch eines übrig ist, dieses
+        val candidates = buckets.keys.filter { it != lastKey }.ifEmpty { buckets.keys.toList() }
+
+        // Unter den grössten Buckets (±1) zufällig wählen -> gleichmässig UND variabel
+        val maxRemaining = candidates.maxOf { buckets.getValue(it).size }
+        val key = candidates.filter { buckets.getValue(it).size >= maxRemaining - 1 }.random()
+
+        val bucket = buckets.getValue(key)
+        result.add(bucket.removeAt(bucket.lastIndex))
+        if (bucket.isEmpty()) buckets.remove(key)
+        lastKey = key
     }
-    return shuffled
+    return result
 }
+
 @Composable
 private fun GridActionTile(
     modifier: Modifier = Modifier,

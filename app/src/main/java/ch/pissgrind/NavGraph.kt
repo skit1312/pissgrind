@@ -45,6 +45,7 @@ import ch.pissgrind.data.model.Screen
 import ch.pissgrind.data.model.playlistList
 import ch.pissgrind.data.repository.CollectionRepository
 import ch.pissgrind.managers.settings.LocalDataSettingsManager
+import ch.pissgrind.managers.settings.ShuffleSettingsManager
 import ch.pissgrind.ui.screens.AlbumDetails
 import ch.pissgrind.ui.screens.AlbumScreen
 import ch.pissgrind.ui.screens.ArtistDetails
@@ -83,7 +84,7 @@ fun SetupNavGraph(
     mediaController: MediaController?,
     scaffoldState: BottomSheetScaffoldState,
     onQuickTrainClick: (List<MediaItem>) -> Unit,
-    collectionRepository: CollectionRepository? = null
+    collectionRepository: CollectionRepository? = null,
 ) {
 
     val context = LocalContext.current
@@ -288,32 +289,22 @@ fun SetupNavGraph(
             ) {
                 S_AppearanceScreen(navController)
             }
-            /*           composable(
-                route = Screen.S_Providers.route,
-                enterTransition = {
-                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { it / 4 } + fadeIn(animationSpec)
-                },
-                exitTransition = {
-                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { it / 4 } + fadeOut(animationSpec)
-                }
-            ) {
-                S_ProviderScreen(navController)
-             }
-  */
 
             composable(
                 route = Screen.S_Shuffle.route,
                 enterTransition = {
-                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { it / 4 } + fadeIn(tween(300))
+                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { it / 4 } + fadeIn(
+                        animationSpec
+                    )
                 },
                 exitTransition = {
-                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { it / 4 } + fadeOut(tween(300))
+                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { it / 4 } + fadeOut(
+                    animationSpec
+                    )
                 }
             ) {
-                val audioSettingsManager = hiltViewModel<ShuffleSettingsViewModel>().audioSettingsManager
-                S_ShuffleScreen(navController, audioSettingsManager)
+                S_ShuffleScreen(navController)
             }
-
 
             composable(route = Screen.S_Account.route) {
                 S_AccountScreen(navController)

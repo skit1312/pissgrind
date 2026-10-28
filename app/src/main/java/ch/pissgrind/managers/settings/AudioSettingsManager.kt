@@ -35,18 +35,4 @@ class AudioSettingsManager @Inject constructor(
     val transcodingFormatFlow: Flow<String> = flowOf(TRANSCODING_FORMAT)
     val scrobblePercentFlow: Flow<Int> = flowOf(SCROBBLE_PERCENT)
 
-    // ===== SHUFFLE RANGE =====
-
-    // Default 5000, range 1000-10000 or ALL (-1)
-    val shuffleRangeFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[SHUFFLE_RANGE_KEY] ?: 6000
-    }
-
-    suspend fun setShuffleRange(range: Int) {
-        withContext(NonCancellable) {
-            context.dataStore.edit { preferences ->
-                preferences[SHUFFLE_RANGE_KEY] = range
-            }
-        }
-    }
 }

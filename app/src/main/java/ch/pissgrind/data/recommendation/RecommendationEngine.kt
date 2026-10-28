@@ -180,7 +180,7 @@ class RecommendationEngine(
      */
     fun getMyMix(
         recommendations: List<ScoredAlbum>,
-        maxAlbums: Int = 20
+        maxAlbums: Int = 60
     ): List<ScoredAlbum> {
         return recommendations.take(maxAlbums).shuffled()
     }

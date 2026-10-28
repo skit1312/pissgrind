@@ -228,15 +228,15 @@ class RecommendationRepository @Inject constructor(
      * Changes every [6] hours.
      */
     private fun applyRotation(recommendations: List<ScoredAlbum>): List<ScoredAlbum> {
-        if (recommendations.size <= 5) return recommendations
+        if (recommendations.size <= 15) return recommendations
 
         val rotationPeriod = 6 * 60 * 60 * 1000L
         val seed = System.currentTimeMillis() / rotationPeriod
         val random = java.util.Random(seed)
 
         // Keep top 5 in the mix, shuffle the rest
-        val top = recommendations.take(5)
-        val rest = recommendations.drop(5).shuffled(random)
+        val top = recommendations.take(15)
+        val rest = recommendations.drop(15).shuffled(random)
 
         // Interleave top and rest for variety
         val result = mutableListOf<ScoredAlbum>()

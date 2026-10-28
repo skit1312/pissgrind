@@ -17,20 +17,16 @@ class ShuffleSettingsManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        private val SHUFFLE_RANGE_KEY = intPreferencesKey("shuffle_range")
-        const val SHUFFLE_RANGE_ALL = -1
+        val PLAYLIST_SIZE_OPTIONS = listOf(100, 200, 500, 1000)
+        const val DEFAULT_PLAYLIST_SIZE = 200
+        private val PLAYLIST_SIZE_KEY = intPreferencesKey("playlist_size")
     }
 
-    // Default 6000, range 1000-10000 or ALL (-1)
-    val shuffleRangeFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[SHUFFLE_RANGE_KEY] ?: 6000
-    }
+    val playlistSizeFlow: Flow<Int> = context.dataStore.data
+        .map { it[PLAYLIST_SIZE_KEY] ?: DEFAULT_PLAYLIST_SIZE }
 
-    suspend fun setShuffleRange(range: Int) {
-        withContext(NonCancellable) {
-            context.dataStore.edit { preferences ->
-                preferences[SHUFFLE_RANGE_KEY] = range
-            }
-        }
+    suspend fun setPlaylistSize(size: Int) {
+        context.dataStore.edit { it[PLAYLIST_SIZE_KEY] = size }
     }
 }
+

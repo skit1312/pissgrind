@@ -7,13 +7,11 @@ import ch.pissgrind.data.recommendation.CoverArtHelper.getCoverArtUrl
 import ch.pissgrind.data.recommendation.GenreProfile
 import ch.pissgrind.data.recommendation.RecommendationRepository
 import ch.pissgrind.data.recommendation.ScoredAlbum
-import ch.pissgrind.data.recommendation.TrainingModeManager
 import ch.pissgrind.data.repository.AlbumRepository
 import ch.pissgrind.data.repository.GenreRepository
 import ch.pissgrind.data.repository.SongRepository
 import ch.pissgrind.managers.NavidromeManager
 import ch.pissgrind.managers.settings.ExcludedAlbumsManager
-import ch.pissgrind.managers.settings.ShuffleSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -23,10 +21,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.random.Random
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import ch.pissgrind.data.recommendation.TrainingDataEvent
+import ch.pissgrind.managers.settings.ShuffleSettingsManager
 import kotlinx.coroutines.flow.drop
 
 
@@ -159,7 +157,7 @@ class HomeScreenViewModel @Inject constructor(
             excludedAlbumsManager.excludeAlbum(albumId)
             val recs = recommendationRepository.recomputeFromCache()
             _recommendations.value = recs
-            _myMix.value = recs.take(20).shuffled()
+            _myMix.value = recs.take(50).shuffled()
         }
     }
 
@@ -168,7 +166,7 @@ class HomeScreenViewModel @Inject constructor(
             excludedAlbumsManager.restoreAlbum(albumId)
             val recs = recommendationRepository.recomputeFromCache()
             _recommendations.value = recs
-            _myMix.value = recs.take(20).shuffled()
+            _myMix.value = recs.take(50).shuffled()
         }
     }
 
@@ -227,9 +225,9 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
-                val recentlyPlayedDeferred = async { albumRepository.getAlbums("recent", 21, 0, true) }
-                val recentDeferred = async { albumRepository.getAlbums("newest", 60, 0, true) }
-                val mostPlayedDeferred = async { albumRepository.getAlbums("frequent", 21, 0, true) }
+                val recentlyPlayedDeferred = async { albumRepository.getAlbums("recent", 10, 0, true) }
+                val recentDeferred = async { albumRepository.getAlbums("newest", 210, 0, true) }
+                val mostPlayedDeferred = async { albumRepository.getAlbums("frequent", 10, 0, true) }
                 val shuffledDeferred = async { albumRepository.getAlbums("random", 20, 0, true) }
 
                 _recentlyPlayedAlbums.value = recentlyPlayedDeferred.await()
@@ -254,7 +252,7 @@ class HomeScreenViewModel @Inject constructor(
                 _genreProfile.value = profile
                 _topGenre.value = profile.topGenre.replaceFirstChar { it.uppercase() }
 
-                _myMix.value = recs.take(20).shuffled()
+                _myMix.value = recs.take(50).shuffled()
 
                 if (forceRefresh) loadGenreMixCovers()
 
@@ -266,22 +264,6 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    // Training Button
-    suspend fun getTrainingPlaylist(): List<MediaItem> {
-        val range = shuffleSettingsManager.shuffleRangeFlow.first()
-
-        return if (range == ShuffleSettingsManager.SHUFFLE_RANGE_ALL) {
-            val randomOffset = Random.nextInt(0, 5000)
-            val songs = songRepository.getSongs(songCount = 10000, songOffset = randomOffset)
-            if (songs.size >= 50) songs.shuffled()
-            else songRepository.getSongs(songCount = 10000, songOffset = 0).shuffled()
-        } else {
-            val randomOffset = if (range > 50) Random.nextInt(0, range) else 0
-            val songs = songRepository.getSongs(songCount = range, songOffset = randomOffset)
-            if (songs.size >= 50) songs.shuffled()
-            else songRepository.getSongs(songCount = range, songOffset = 0).shuffled()
-        }
-    }
 
     private fun spreadByAlbum(songs: List<MediaItem>): List<MediaItem> {
         if (songs.size <= 1) return songs
@@ -315,26 +297,6 @@ class HomeScreenViewModel @Inject constructor(
         return _myMix.value.map { it.albumId }
     }
 
-    fun getGenreMixAlbumIds(): List<String> {
-        return _recommendations.value
-            .filter { album ->
-                album.genres.any { it.equals(_topGenre.value, ignoreCase = true) }
-            }
-            .shuffled()
-            .take(20)
-            .map { it.albumId }
-    }
-
-    fun startTrainingMode() {
-        TrainingModeManager.startTrainingPlaylist()
-    }
-
-    fun submitTrainingFeedback(albumId: String, genres: List<String>, liked: Boolean) {
-        viewModelScope.launch {
-            recommendationRepository.submitFeedback(albumId, genres, liked)
-        }
-    }
-
     // ===== EXISTING FUNCTIONS =====
 
     fun reshuffleQuickPicks() {
@@ -344,18 +306,31 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     suspend fun getAlbumSongs(albumId: String): List<MediaItem> {
-        return albumRepository.getAlbum(albumId) ?: emptyList()
+        return (albumRepository.getAlbum(albumId) ?: emptyList())
+            .filter { item ->
+                val id = item.mediaMetadata.extras?.getString("navidromeID") ?: item.mediaId
+                item.mediaId != albumId && id != albumId
+            }
     }
 
     suspend fun getAllSongsShuffled(): List<MediaItem> {
-        val range = shuffleSettingsManager.shuffleRangeFlow.first()
-        val songCount = if (range == ShuffleSettingsManager.SHUFFLE_RANGE_ALL) 10000 else range
-        val randomOffset = if (songCount > 50) Random.nextInt(0, songCount) else 0
+        val targetSize = shuffleSettingsManager.playlistSizeFlow.first()
 
-        val songs = songRepository.getSongs(songCount = songCount, songOffset = randomOffset)
-        return if (songs.size >= 50) songs.shuffled().take(100)
-        else songRepository.getSongs(songCount = songCount, songOffset = 0).shuffled().take(100)
+        val all = mutableListOf<MediaItem>()
+        var offset = 0
+        val pageSize = 500
+
+        while (true) {
+            val page = songRepository.getSongs(songCount = pageSize, songOffset = offset)
+            all.addAll(page)
+            if (page.size < pageSize) break
+            offset += pageSize
+            if (offset > 100_000) break
+        }
+
+        return all.shuffled().take(targetSize)
     }
+
 
     fun getAvailableGenres(): List<String> {
         val allAlbums = recommendationRepository.getAllAlbumsCached()

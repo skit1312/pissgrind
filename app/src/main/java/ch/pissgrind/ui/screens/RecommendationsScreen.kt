@@ -86,13 +86,13 @@ fun RecommendationsScreen(
     val coroutineScope = rememberCoroutineScope()
     val isDark = LocalIsDark.current
     val textColor = if (isDark) PissGreen else PissBlack
-    val subtleColor = if (isDark) PissGreen.copy(alpha = 0.7f) else PissBlack.copy(alpha = 0.7f)
+    val subtleColor = if (isDark) PissGreen.copy(alpha = 0.8f) else PissBlack.copy(alpha = 0.8f)
     val lightBg = LocalLightBackground.current
     val chipSelectedBg = if (isDark) PissGreen else PissBlack
     val chipSelectedText = if (isDark) PissBlack else lightBg
     val chipBg = if (isDark) PissBlack else lightBg
     val chipText = if (isDark) PissGreen else PissBlack
-    val chipBorder = if (isDark) PissGreen.copy(alpha = 0.5f) else PissBlack.copy(alpha = 0.5f)
+    val chipBorder = if (isDark) PissGreen.copy(alpha = 0.8f) else PissBlack.copy(alpha = 0.8f)
     val dialogBg = if (isDark) PissBlack else lightBg
 
     val recommendations by viewModel.recommendations.collectAsStateWithLifecycle()
@@ -184,7 +184,7 @@ fun RecommendationsScreen(
                 )
             }
             Text(
-                text = "Recommended for You",
+                text = "Your Recommendations",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = textColor
@@ -256,10 +256,10 @@ fun RecommendationsScreen(
                             selectedContainerColor = chipSelectedBg.copy(alpha = 0.8f),
                             selectedLabelColor = chipSelectedText,
                             containerColor = chipBg,
-                            labelColor = chipText.copy(alpha = 0.7f)
+                            labelColor = chipText.copy(alpha = 0.8f)
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            borderColor = chipBorder.copy(alpha = 0.3f),
+                            borderColor = chipBorder.copy(alpha = 0.8f),
                             selectedBorderColor = chipSelectedBg,
                             enabled = true,
                             selected = selectedGenre == genre
@@ -275,7 +275,7 @@ fun RecommendationsScreen(
         Text(
             text = "${displayedAlbums.size} albums",
             style = MaterialTheme.typography.bodySmall,
-            color = textColor.copy(alpha = 0.5f),
+            color = textColor.copy(alpha = 0.8f),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
         )
 
@@ -295,7 +295,7 @@ fun RecommendationsScreen(
                     textColor = textColor,
                     subtleColor = subtleColor,
                     onAlbumClick = {
-                        val coverUrl = album.getCoverArtUrl(500)
+                        val coverUrl = album.getCoverArtUrl(300)
                         val encodedImage = URLEncoder.encode(coverUrl, "UTF-8")
                         navHostController.navigate(Screen.AlbumDetails.route + "/${album.albumId}/$encodedImage") {
                             launchSingleTop = true
@@ -414,7 +414,7 @@ private fun RecommendationListItem(
             modifier = Modifier
                 .size(72.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .border(1.dp, textColor.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
+                .border(1.dp, textColor.copy(alpha = 0.8f), RoundedCornerShape(2.dp))
         )
 
         Spacer(modifier = Modifier.width(12.dp))

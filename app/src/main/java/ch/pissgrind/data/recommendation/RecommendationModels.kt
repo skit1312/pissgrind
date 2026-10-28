@@ -53,7 +53,7 @@ data class AlbumGenreData(
  * Configuration for the recommendation engine.
  */
 data class RecommendationConfig(
-    val maxRecommendations: Int = 20,
+    val maxRecommendations: Int = 50,
     val maxPerArtist: Int = 2,
     val recencyBias: Float = 1.3f,
     val diversityFactor: Float = 0.2f,

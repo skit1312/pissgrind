@@ -72,7 +72,6 @@ import ch.pissgrind.ui.theme.PissGreen
 import ch.pissgrind.ui.theme.PissBlack
 import kotlinx.coroutines.launch
 
-//region PREVIEWS
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddToPlaylistDialog(){
@@ -90,7 +89,6 @@ fun PreviewNewPlaylistDialog(){
 fun PreviewDeletePlaylistDialog(){
     DeletePlaylist(setShowDialog = {})
 }
-//endregion
 
 var showAddSongToPlaylistDialog = mutableStateOf(false)
 var showNewPlaylistDialog = mutableStateOf(false)
@@ -114,12 +112,9 @@ fun AddSongToPlaylist(
     val songId = song.mediaMetadata.extras?.getString("navidromeID") ?: ""
     val songTitle = song.mediaMetadata.title?.toString()?.take(30) ?: "Song"
 
-    // playlistId -> Song-IDs in Reihenfolge (für lastIndexOf beim Entfernen)
     val playlistSongIds = remember { mutableStateMapOf<String, List<String>>() }
-    // Playlists, die gerade laden oder aktualisiert werden (Spinner + Doppel-Tap-Schutz)
     val busy = remember { mutableStateListOf<String>() }
 
-    // Beim Öffnen und bei neuen Playlists: Inhalte parallel laden
     LaunchedEffect(playlists, songId) {
         playlists.forEach { pl ->
             val plId = pl.mediaMetadata.extras?.getString("navidromeID") ?: return@forEach
@@ -150,14 +145,14 @@ fun AddSongToPlaylist(
                 }
                 playlistSongIds[plId] = viewModel.getPlaylistSongIds(plId)
 
-                Toast.makeText(
-                    context,
-                    if (wasInPlaylist) "$songTitle removed from $plName" else "$songTitle added to $plName",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } catch (e: Exception) {
-                Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                runCatching { playlistSongIds[plId] = viewModel.getPlaylistSongIds(plId) }
+                //Toast.makeText(
+                  //  context,
+                  //  if (wasInPlaylist) "$songTitle removed from $plName" else "$songTitle added to $plName",
+                  //  Toast.LENGTH_SHORT
+               // ).show()
+          //  } catch (e: Exception) {
+            //    Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+              //  runCatching { playlistSongIds[plId] = viewModel.getPlaylistSongIds(plId) }
             } finally {
                 busy.remove(plId)
             }
@@ -173,7 +168,7 @@ fun AddSongToPlaylist(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ── Header + X ──
+                // ========= Header + X =======
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.Top
@@ -210,13 +205,13 @@ fun AddSongToPlaylist(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // ==== List ====
-                val listFadingEdge =
-                    Brush.verticalGradient(0.75f to Color.Red, 1f to Color.Transparent)
+                //val listFadingEdge =
+                  //  Brush.verticalGradient(0.75f to Color.Red, 1f to Color.Transparent)
 
                 Column(
                     modifier = Modifier
                         .height(256.dp)
-                        .fadingEdge(listFadingEdge)
+                       // .fadingEdge(listFadingEdge)
                         .verticalScroll(rememberScrollState())
                 ) {
                     for (playlist in playlists) {
