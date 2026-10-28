@@ -18,8 +18,8 @@ android {
         applicationId = "ch.pissgrind"
         minSdk = 26
         targetSdk = 37
-        versionCode = 250
-        versionName = "2.5.0"
+        versionCode = 251
+        versionName = "2.5.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
