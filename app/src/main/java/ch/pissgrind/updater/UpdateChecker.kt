@@ -1,11 +1,16 @@
 package ch.pissgrind.updater
 
+import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -15,6 +20,8 @@ data class GitHubRelease(
     @SerialName("tag_name") val tagName: String,
     val body: String? = null,
     val name: String? = null,
+    val prerelease: Boolean = false,
+    val draft: Boolean = false,
     val assets: List<GitHubAsset> = emptyList()
 )
 
@@ -33,64 +40,92 @@ data class UpdateInfo(
 )
 
 object UpdateChecker {
-    private const val LATEST_URL = "https://api.github.com/repos/skit1312/pissgrind/releases/latest"
-    private const val ALL_RELEASES_URL = "https://api.github.com/repos/skit1312/pissgrind/releases"
+    private const val TAG = "UpdateChecker"
+    private const val RELEASES_URL =
+        "https://api.github.com/repos/skit1312/pissgrind/releases?per_page=30"
+    private const val CACHE_TTL_MS = 60 * 60 * 1000L      // 1 Stunde
 
     private val client = HttpClient(OkHttp) {
+        expectSuccess = false
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10_000
+            requestTimeoutMillis = 15_000
+        }
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-            })
+            json(Json { ignoreUnknownKeys = true; isLenient = true })
         }
     }
 
-    suspend fun checkForUpdate(currentVersion: String): UpdateInfo {
-        return try {
-            val latest: GitHubRelease = client.get(LATEST_URL) {
-                header("Accept", "application/vnd.github+json")
-            }.body()
+    private val mutex = Mutex()
+    private var cachedReleases: List<Pair<List<Int>, GitHubRelease>>? = null
+    private var cachedAt = 0L
 
-            val latestVersion = latest.tagName.removePrefix("v")
-            val hasUpdate = isNewer(latestVersion, currentVersion)
-
-            val downloadUrl = latest.assets.firstOrNull { it.name.endsWith(".apk") }?.browserDownloadUrl
-
-            UpdateInfo(
-                hasUpdate = hasUpdate,
-                latestVersion = latestVersion,
-                changelog = latest.body,
-                downloadUrl = downloadUrl
-            )
-        } catch (e: Exception) {
-            android.util.Log.e("UpdateChecker", "Update check failed", e)
-            UpdateInfo(false, currentVersion, null, null, success = false)
+    private suspend fun fetchReleases(force: Boolean = false): List<Pair<List<Int>, GitHubRelease>>? =
+        mutex.withLock {
+            val now = System.currentTimeMillis()
+            if (!force && cachedReleases != null && now - cachedAt < CACHE_TTL_MS) {
+                return@withLock cachedReleases
+            }
+            try {
+                val response = client.get(RELEASES_URL) {
+                    header("Accept", "application/vnd.github+json")
+                }
+                if (response.status != HttpStatusCode.OK) {
+                    Log.w(
+                        TAG,
+                        "HTTP ${response.status.value}, rate limit remaining: " +
+                                "${response.headers["X-RateLimit-Remaining"]}"
+                    )
+                    return@withLock cachedReleases
+                }
+                val releases: List<GitHubRelease> = response.body()
+                cachedReleases = releases
+                    .filter { !it.draft && !it.prerelease }
+                    .mapNotNull { r -> parseVersion(r.tagName)?.let { it to r } }
+                    .sortedWith { a, b -> compareVersions(b.first, a.first) }
+                cachedAt = now
+                cachedReleases
+            } catch (e: Exception) {
+                Log.e(TAG, "Update check failed", e)
+                cachedReleases
+            }
         }
+
+    suspend fun checkForUpdate(currentVersion: String, force: Boolean = false): UpdateInfo {
+        val fail = UpdateInfo(false, currentVersion, null, null, success = false)
+        val releases = fetchReleases(force) ?: return fail
+        val current = parseVersion(currentVersion) ?: return fail
+        val (latestV, latest) = releases.firstOrNull()
+            ?: return UpdateInfo(false, currentVersion, null, null)
+
+        return UpdateInfo(
+            hasUpdate = compareVersions(latestV, current) > 0,
+            latestVersion = latestV.joinToString("."),
+            changelog = latest.body,
+            downloadUrl = latest.assets
+                .firstOrNull { it.name.endsWith(".apk", ignoreCase = true) }
+                ?.browserDownloadUrl
+        )
     }
 
     suspend fun getChangelogSinceVersion(currentVersion: String): String {
-        return try {
-            val releases: List<GitHubRelease> = client.get(ALL_RELEASES_URL) {
-                header("Accept", "application/vnd.github+json")
-            }.body()
-            releases
-                .filter { isNewer(it.tagName.removePrefix("v"), currentVersion) }
-                .joinToString("\n\n") { "## ${it.name ?: it.tagName}\n${it.body ?: ""}" }
-        } catch (e: Exception) {
-            ""
-        }
+        val releases = fetchReleases() ?: return ""
+        val current = parseVersion(currentVersion) ?: return ""
+        return releases
+            .filter { compareVersions(it.first, current) > 0 }
+            .joinToString("\n\n") { (_, r) -> "## ${r.name ?: r.tagName}\n${r.body ?: ""}" }
     }
 
-    private fun isNewer(latest: String, current: String): Boolean {
-        val l = latest.split(".").map { it.toIntOrNull() ?: 0 }
-        val c = current.split(".").map { it.toIntOrNull() ?: 0 }
-        for (i in 0 until maxOf(l.size, c.size)) {
-            val lv = l.getOrElse(i) { 0 }
-            val cv = c.getOrElse(i) { 0 }
-            if (lv > cv) return true
-            if (lv < cv) return false
+    private fun parseVersion(raw: String): List<Int>? =
+        Regex("""\d+(\.\d+)*""").find(raw)?.value
+            ?.split(".")
+            ?.map { it.toIntOrNull() ?: 0 }
+
+    private fun compareVersions(a: List<Int>, b: List<Int>): Int {
+        for (i in 0 until maxOf(a.size, b.size)) {
+            val d = a.getOrElse(i) { 0 }.compareTo(b.getOrElse(i) { 0 })
+            if (d != 0) return d
         }
-        return false
+        return 0
     }
 }
-
