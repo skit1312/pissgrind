@@ -225,9 +225,9 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
-                val recentlyPlayedDeferred = async { albumRepository.getAlbums("recent", 10, 0, true) }
+                val recentlyPlayedDeferred = async { albumRepository.getAlbums("recent", 30, 0, true) }
                 val recentDeferred = async { albumRepository.getAlbums("newest", 210, 0, true) }
-                val mostPlayedDeferred = async { albumRepository.getAlbums("frequent", 10, 0, true) }
+                val mostPlayedDeferred = async { albumRepository.getAlbums("frequent", 30, 0, true) }
                 val shuffledDeferred = async { albumRepository.getAlbums("random", 20, 0, true) }
 
                 _recentlyPlayedAlbums.value = recentlyPlayedDeferred.await()

@@ -529,7 +529,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(
-                            items = mostPlayedAlbums,
+                            items = mostPlayedAlbums.take(10),
                             key = { "mp_${it.mediaId}" }
                         ) { album ->
                             AlbumCard(album, context, navHostController)
@@ -556,7 +556,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(
-                            items = recentlyPlayedAlbums,
+                            items = recentlyPlayedAlbums.take(10),
                             key = { "rp_${it.mediaId}" }
                         ) { album ->
                             AlbumCard(album, context, navHostController)
